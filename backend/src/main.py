@@ -2,6 +2,9 @@ import click
 import json
 from datetime import datetime
 import os
+import resend
+
+resend.api_key = "re_7ZKJYziq_FCbfqachuQemKKzGT63CpnUt"
 
 DATA_FILE = 'invoices.json'
 
@@ -85,7 +88,52 @@ def list():
 @click.argument('invoice_id')
 def mark(invoice_id):
     """Mark an invoice as paid"""
+    # Load data
+    data = load_data()
+    
+    # Find invoice
+    found = False
+    for invoice in data['invoices']:
+        if invoice['id'] == invoice_id:
+            invoice['status'] = 'paid'
+            found = True
+            save_data(data)
+            click.echo(f"Invoice {invoice_id} marked as paid!")
+            break
+    
+    if not found:
+        click.echo(f"Error: Invoice {invoice_id} not found!")
+
     # Mark as paid logic here
+    pass
+@cli.command()
+@click.argument('invoice_id')
+def send(invoice_id):
+    """Send an invoice to client"""
+    # Load data
+    data = load_data()
+    
+    # Find invoice
+    found = False
+    for invoice in data['invoices']:
+        if invoice['id'] == invoice_id:
+            invoice['sent'] = True
+            found = True
+            save_data(data)
+            click.echo(f"Invoice {invoice_id} sent!")
+            break
+    
+    if not found:
+        click.echo(f"Error: Invoice {invoice_id} not found!")
+
+    # Send invoice logic here
+    r = resend.Emails.send({
+        "from": "onboarding@resend.dev",
+        "to": "thomlamb74@gmail.com",
+        "subject": "Hello World",
+        "html": "Hi Sushil, <br> This is a test email from Resend."
+    })
+        
     pass
 
 if __name__ == '__main__':

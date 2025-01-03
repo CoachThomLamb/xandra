@@ -7,8 +7,8 @@
       "amount": 225.0,
       "notes": "none",
       "date": "2024-12-31",
-      "status": "unpaid",
-      "sent": false
+      "status": "paid",
+      "sent": true
     }
   ]
 }
