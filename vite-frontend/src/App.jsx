@@ -15,6 +15,7 @@ function Workouts() {
       ...workout,
       exercises: Array.isArray(workout.exercises) ? workout.exercises : []
     }));
+    
     setWorkouts(parsedWorkouts);
   }, []);
 
