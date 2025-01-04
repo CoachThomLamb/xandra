@@ -5,6 +5,11 @@ function WorkoutDetail() {
   const { index } = useParams();
   const [workouts, setWorkouts] = useState(JSON.parse(localStorage.getItem('workouts')) || []);
   const workout = workouts[index];
+
+  if (!workout) {
+    return <div>Workout not found</div>;
+  }
+
   const [title, setTitle] = useState(workout.title);
   const [exercises, setExercises] = useState(Array.isArray(workout.exercises) ? workout.exercises : []);
   const [date, setDate] = useState(workout.date);
@@ -28,10 +33,6 @@ function WorkoutDetail() {
     );
     setExercises(updatedExercises);
   };
-
-  if (!workout) {
-    return <div>Workout not found</div>;
-  }
 
   return (
     <div>
