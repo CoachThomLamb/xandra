@@ -43,7 +43,7 @@
 input,
 textarea,
 select {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 @media (max-width: 1280px) {
@@ -55,11 +55,49 @@ select {
   }
 }
 
-@media (max-width: 768px) {
+.exercise-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  max-width: 100%; /* Ensure container does not exceed screen width */
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+.exercise-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1em 0;
+  flex-wrap: nowrap; /* Ensure items stay on one row */
+  max-width: 100%; /* Ensure row does not exceed screen width */
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+.exercise-input {
+  flex: 1;
+  min-width: 0; /* Allows inputs to shrink */
+  margin-right: 0.5rem;
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+}
+
+.exercise-checkbox {
+  flex: 0 0 auto;
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 980px) {
   #root {
     padding: 0.5rem;
   }
   .card {
     padding: 0.5em;
+  }
+  .exercise-row {
+    flex-wrap: nowrap; /* Ensure items stay on one row */
+  }
+  .exercise-input {
+    flex: 1;
+    max-width: 20%; /* Adjust as needed to fit the screen */
+    box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
   }
 }
