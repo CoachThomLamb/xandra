@@ -5,6 +5,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import './App.css';
 import WorkoutDetail from './components/WorkoutDetail';
 import AdminDashboard from './components/AdminDashboard';
+import UserWorkouts from './components/UserWorkouts';
 import { auth, db, getUserRole } from './firebaseConfig';
 
 function Workouts() {
@@ -110,6 +111,7 @@ function App() {
               <Route path="/" element={<Workouts />} />
               <Route path="/workout/:index" element={<WorkoutDetail />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
             </Routes>
           </div>
         ) : (

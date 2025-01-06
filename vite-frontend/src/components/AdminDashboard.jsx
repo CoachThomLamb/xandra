@@ -15,7 +15,7 @@ const AdminDashboard = () => {
     };
 
     const fetchWorkouts = async () => {
-      const querySnapshot = await getDocs(collection(db, 'workouts'));
+      const querySnapshot = await getDocs(collection(db, 'users', ));
       const workoutsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setWorkouts(workoutsData);
     };
