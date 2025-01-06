@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD3s06D0y79sZkeKXArZU7tgcSvbgx4lqI",
@@ -28,4 +28,14 @@ const db = getFirestore(app);
 //     }
 // };
 // console.log('fetchDocuments:', await fetchDocuments("test"));
-export { auth, db };
+
+const getUserRole = async (userId) => {
+  const userDoc = await getDoc(doc(db, 'users', userId));
+  if (userDoc.exists()) {
+    return userDoc.data().role;
+  } else {
+    throw new Error('User not found');
+  }
+};
+
+export { auth, db, getUserRole };

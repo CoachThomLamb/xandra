@@ -1,24 +1,35 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { collection, getDocs } from 'firebase/firestore';
 import './App.css';
 import WorkoutDetail from './components/WorkoutDetail';
-import { auth } from './firebaseConfig';
+import AdminDashboard from './components/AdminDashboard';
+import { auth, db, getUserRole } from './firebaseConfig';
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
-  const [title, setTitle] = useState('');
-  const [exercises, setExercises] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedWorkouts = JSON.parse(localStorage.getItem('workouts')) || [];
-    const parsedWorkouts = storedWorkouts.map(workout => ({
-      ...workout,
-      exercises: Array.isArray(workout.exercises) ? workout.exercises : []
-    }));
-    
-    setWorkouts(parsedWorkouts);
+    const fetchWorkouts = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const workoutsCollection = collection(db, 'users', user.uid, 'workouts');
+        const workoutSnapshot = await getDocs(workoutsCollection);
+        const workoutList = workoutSnapshot.docs.map(doc => doc.data());
+        setWorkouts(workoutList);
+      } else {
+        const storedWorkouts = JSON.parse(localStorage.getItem('workouts')) || [];
+        const parsedWorkouts = storedWorkouts.map(workout => ({
+          ...workout,
+          exercises: Array.isArray(workout.exercises) ? workout.exercises : []
+        }));
+        setWorkouts(parsedWorkouts);
+      }
+    };
+
+    fetchWorkouts();
   }, []);
 
   const addWorkout = () => {
@@ -26,7 +37,6 @@ function Workouts() {
       title: 'New Workout',
       exercises: [],
       date: new Date().toISOString().split('T')[0],
-      clientId: null
     };
     const updatedWorkouts = [...workouts, newWorkout];
     setWorkouts(updatedWorkouts);
@@ -55,13 +65,17 @@ function Workouts() {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
+        const role = await getUserRole(user.uid);
+        setIsAdmin(role === 'admin');
       } else {
         setUser(null);
+        setIsAdmin(false);
       }
     });
 
@@ -91,9 +105,11 @@ function App() {
         {user ? (
           <div>
             <button onClick={handleLogout}>Logout</button>
+            {isAdmin && <Link to="/admin">Admin Dashboard</Link>}
             <Routes>
               <Route path="/" element={<Workouts />} />
               <Route path="/workout/:index" element={<WorkoutDetail />} />
+              <Route path="/admin" element={<AdminDashboard />} />
             </Routes>
           </div>
         ) : (
