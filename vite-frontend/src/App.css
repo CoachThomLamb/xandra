@@ -65,23 +65,41 @@ select {
 
 .exercise-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5em;
   margin: 1em 0;
-  flex-wrap: nowrap; /* Ensure items stay on one row */
   max-width: 100%; /* Ensure row does not exceed screen width */
   overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+.exercise-row-group {
+  display: flex;
+  gap: 0.5em;
 }
 
 .exercise-input {
   flex: 1;
   min-width: 0; /* Allows inputs to shrink */
-  margin-right: 0.5rem;
   box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
 }
 
+.exercise-input-weight,
+.exercise-input-reps {
+  max-width: 5ch; /* Limit the size to 5 characters */
+  width: 5ch; /* Ensure the input field is only 5 characters wide */
+}
+
+.exercise-notes {
+  width: 100%;
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+}
+
+.exercise-checkbox-label {
+  display: flex;
+  align-items: center;
+}
+
 .exercise-checkbox {
-  flex: 0 0 auto;
   margin-left: 0.5rem;
 }
 
@@ -92,12 +110,20 @@ select {
   .card {
     padding: 0.5em;
   }
-  .exercise-row {
-    flex-wrap: nowrap; /* Ensure items stay on one row */
+  .exercise-row-group {
+    flex-wrap: wrap;
   }
   .exercise-input {
     flex: 1;
-    max-width: 20%; /* Adjust as needed to fit the screen */
+    max-width: 30%; /* Adjust as needed to fit the screen */
     box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+  }
+  .exercise-input.weight,
+  .exercise-input.reps {
+    max-width: 5ch; /* Limit the size to 5 characters */
+    width: 5ch; /* Ensure the input field is only 5 characters wide */
+  }
+  .exercise-notes {
+    width: 100%;
   }
 }

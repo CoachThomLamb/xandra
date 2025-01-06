@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { auth, db } from '../firebaseConfig';
+import { doc, setDoc } from 'firebase/firestore';
 
 function WorkoutDetail() {
   const { index } = useParams();
@@ -7,30 +9,44 @@ function WorkoutDetail() {
   const workout = workouts[index] || {
     title: '',
     exercises: [],
-    date: new Date().toISOString().split('T')[0],
-    clientId: ''
+    date: new Date().toISOString(), // Include timestamp
   };
 
   const [title, setTitle] = useState(workout.title);
   const [exercises, setExercises] = useState(Array.isArray(workout.exercises) ? workout.exercises : []);
   const [date, setDate] = useState(workout.date);
-  const [clientId, setClientId] = useState(workout.clientId);
 
   useEffect(() => {
     if (!workouts[index]) {
-      const newWorkout = { title, exercises, date, clientId };
+      const newWorkout = { title, exercises, date };
       const updatedWorkouts = [...workouts, newWorkout];
       setWorkouts(updatedWorkouts);
       localStorage.setItem('workouts', JSON.stringify(updatedWorkouts));
     }
   }, []);
 
+  const saveWorkoutToFirebase = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const workoutRef = doc(db, 'users', user.uid, 'workouts', index);
+        await setDoc(workoutRef, { title, exercises, date });
+        console.log('Workout saved to Firebase');
+      } else {
+        console.log('No user is signed in');
+      }
+    } catch (error) {
+      console.error('Error saving workout to Firebase:', error);
+    }
+  };
+
   const updateWorkout = () => {
-    const updatedWorkout = { ...workout, title, exercises, date, clientId };
+    const updatedWorkout = { ...workout, title, exercises, date };
     const updatedWorkouts = [...workouts];
     updatedWorkouts[index] = updatedWorkout;
     setWorkouts(updatedWorkouts);
     localStorage.setItem('workouts', JSON.stringify(updatedWorkouts));
+    saveWorkoutToFirebase();
   };
 
   const addExerciseSet = () => {
@@ -53,52 +69,45 @@ function WorkoutDetail() {
       </div>
       <div>
         <label>Date:</label>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-      </div>
-      <div>
-        <label>Client ID:</label>
-        <input type="text" value={clientId} onChange={(e) => setClientId(e.target.value)} />
+        <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
       <div className="exercise-container" style={{ overflowX: 'auto' }}>
         <label>Exercises:</label>
         {exercises.map((exercise, i) => (
           <div key={i} className="exercise-row" style={{ display: 'flex', flexWrap: 'wrap' }}>
-            <input
-              type="text"
-              placeholder="Exercise Name"
-              value={exercise.name}
-              onChange={(e) => updateExerciseSet(i, 'name', e.target.value)}
-              className="exercise-input"
-            />
-            <input
-              type="text"
-              placeholder="Weight"
-              value={exercise.weight}
-              onChange={(e) => updateExerciseSet(i, 'weight', e.target.value)}
-              className="exercise-input"
-            />
-            <input
-              type="text"
-              placeholder="Reps"
-              value={exercise.reps}
-              onChange={(e) => updateExerciseSet(i, 'reps', e.target.value)}
-              className="exercise-input"
-            />
-            <input
-              type="text"
-              placeholder="Rest Interval"
-              value={exercise.rest}
-              onChange={(e) => updateExerciseSet(i, 'rest', e.target.value)}
-              className="exercise-input"
-            />
+            <div className="exercise-row-group">
+              <input
+                type="text"
+                placeholder="Exercise Name"
+                value={exercise.name}
+                onChange={(e) => updateExerciseSet(i, 'name', e.target.value)}
+                className="exercise-input"
+              />
+              <input
+                type="text"
+                placeholder="Weight"
+                value={exercise.weight}
+                onChange={(e) => updateExerciseSet(i, 'weight', e.target.value)}
+                className="exercise-input-weightx=x-"
+                maxLength={5}
+              />
+              <input
+                type="text"
+                placeholder="Reps"
+                value={exercise.reps}
+                onChange={(e) => updateExerciseSet(i, 'reps', e.target.value)}
+                className="exercise-input-reps"
+                maxLength={5}
+              />
+            </div>
             <input
               type="text"
               placeholder="Notes"
               value={exercise.notes}
               onChange={(e) => updateExerciseSet(i, 'notes', e.target.value)}
-              className="exercise-input"
+              className="exercise-notes"
             />
-            <label>
+            <label className="exercise-checkbox-label">
               Completed:
               <input
                 type="checkbox"

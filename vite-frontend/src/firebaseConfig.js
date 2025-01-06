@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD3s06D0y79sZkeKXArZU7tgcSvbgx4lqI",
@@ -14,5 +15,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { auth };
+// export const fetchDocuments = async (collectionName) => {
+//     try {
+//       const querySnapshot = await getDocs(collection(db, collectionName));
+//       const documents = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//       return documents;
+//     } catch (error) {
+//       console.error('Error fetching documents:', error);
+//       throw error;
+//     }
+// };
+// console.log('fetchDocuments:', await fetchDocuments("test"));
+export { auth, db };
