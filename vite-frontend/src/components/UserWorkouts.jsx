@@ -4,7 +4,8 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const UserWorkouts = () => {
-  const { userId } = useParams();
+  let { userId } = useParams();
+  //   const fakeuserID = "FQuJEf2xw9bI0KNm8TCYGTJEpQy1"
   const [workouts, setWorkouts] = useState([]);
   const [error, setError] = useState(null);
 
