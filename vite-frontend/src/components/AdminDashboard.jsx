@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
 import { db } from '../firebaseConfig';
 import withAdminProtection from './withAdminProtection';
 
@@ -15,7 +16,7 @@ const AdminDashboard = () => {
     };
 
     const fetchWorkouts = async () => {
-      const querySnapshot = await getDocs(collection(db, 'users', ));
+      const querySnapshot = await getDocs(collection(db, 'users', 'workouts'));
       const workoutsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setWorkouts(workoutsData);
     };
@@ -30,7 +31,11 @@ const AdminDashboard = () => {
       <h2>Users</h2>
       <ul>
         {users.map(user => (
-          <li key={user.id}>{user.email} - {user.role}</li>
+          <li key={user.id}>
+            <Link to={`/user-workouts/${user.id}`}>
+              {user.email} - {user.role}
+            </Link>
+          </li>
         ))}
       </ul>
       <h2>Workouts</h2>
