@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { auth, db } from '../firebaseConfig';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
 
 function WorkoutDetail() {
   const { index } = useParams();
@@ -29,8 +29,8 @@ function WorkoutDetail() {
     try {
       const user = auth.currentUser;
       if (user) {
-        const workoutRef = doc(db, 'users', user.uid, 'workouts', index);
-        await setDoc(workoutRef, { title, exercises, date });
+        const workoutRef = collection(db, 'users', user.uid, 'workouts');
+        await addDoc(workoutRef, { title, exercises, date });
         console.log('Workout saved to Firebase');
       } else {
         console.log('No user is signed in');
