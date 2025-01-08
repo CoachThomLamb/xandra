@@ -8,6 +8,7 @@ import AdminDashboard from './components/AdminDashboard';
 import UserWorkouts from './components/UserWorkouts';
 import UserWorkoutDetail from './components/UserWorkoutDetail';
 import { auth, db, getUserRole } from './firebaseConfig';
+ import WorkoutTemplateBuilder from './components/WorkoutTemplateBuilder';
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
@@ -114,6 +115,7 @@ function App() {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
               <Route path="/user-workouts/:userId/workouts/:workoutId" element={<UserWorkoutDetail />} />
+              <Route path="/workout-template-builder" element={<WorkoutTemplateBuilder />} />/*
             </Routes>
           </div>
         ) : (

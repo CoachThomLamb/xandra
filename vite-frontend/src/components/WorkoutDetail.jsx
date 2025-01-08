@@ -1,29 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { auth, db } from '../firebaseConfig';
-import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 
 function WorkoutDetail() {
   const { index } = useParams();
-  const [workouts, setWorkouts] = useState(JSON.parse(localStorage.getItem('workouts')) || []);
-  const workout = workouts[index] || {
-    title: '',
-    exercises: [],
-    date: new Date().toISOString(), // Include timestamp
-  };
-
-  const [title, setTitle] = useState(workout.title);
-  const [exercises, setExercises] = useState(Array.isArray(workout.exercises) ? workout.exercises : []);
-  const [date, setDate] = useState(workout.date);
+  const [workouts, setWorkouts] = useState([]);
+  const [title, setTitle] = useState('');
+  const [exercises, setExercises] = useState([]);
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
-    if (!workouts[index]) {
-      const newWorkout = { title, exercises, date };
-      const updatedWorkouts = [...workouts, newWorkout];
-      setWorkouts(updatedWorkouts);
-      localStorage.setItem('workouts', JSON.stringify(updatedWorkouts));
-    }
-  }, []);
+    const fetchWorkouts = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const q = query(collection(db, 'users', user.uid, 'workouts'));
+          const querySnapshot = await getDocs(q);
+          const workoutsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setWorkouts(workoutsData);
+
+          if (index && workoutsData[index]) {
+            const workout = workoutsData[index];
+            setTitle(workout.title);
+            setExercises(workout.exercises);
+            setDate(workout.date);
+          }
+        } else {
+          console.log('No user is signed in');
+        }
+      } catch (error) {
+        console.error('Error fetching workouts:', error);
+      }
+    };
+
+    fetchWorkouts();
+  }, [index]);
 
   const saveWorkoutToFirebase = async () => {
     try {
@@ -40,13 +52,19 @@ function WorkoutDetail() {
     }
   };
 
-  const updateWorkout = () => {
-    const updatedWorkout = { ...workout, title, exercises, date };
+  const updateWorkout = async () => {
+    const updatedWorkout = { title, exercises, date };
     const updatedWorkouts = [...workouts];
-    updatedWorkouts[index] = updatedWorkout;
+    if (index) {
+      updatedWorkouts[index] = updatedWorkout;
+    } else {
+      updatedWorkouts.push(updatedWorkout);
+    }
     setWorkouts(updatedWorkouts);
     localStorage.setItem('workouts', JSON.stringify(updatedWorkouts));
-    saveWorkoutToFirebase();
+
+    // Save the workout to Firebase
+    await saveWorkoutToFirebase();
   };
 
   const addExerciseSet = () => {
@@ -88,7 +106,7 @@ function WorkoutDetail() {
                 placeholder="Weight"
                 value={exercise.weight}
                 onChange={(e) => updateExerciseSet(i, 'weight', e.target.value)}
-                className="exercise-input-weightx=x-"
+                className="exercise-input-weight"
                 maxLength={5}
               />
               <input
