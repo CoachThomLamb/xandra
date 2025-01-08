@@ -34,8 +34,8 @@ const UserWorkouts = () => {
       <h1>Workouts for User: {userId}</h1>
       <div className="workout-list">
         {workouts.length > 0 ? (
-          workouts.map((workout, index) => (
-            <Link key={workout.id} to={`/workout/${index}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+          workouts.map((workout) => (
+            <Link key={workout.id} to={`/user-workouts/${userId}/workouts/${workout.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="workout-card" style={{ backgroundColor: 'grey', padding: '10px', margin: '10px auto', borderRadius: '8px', maxWidth: '600px' }}>
                 <h2>{workout.title} <small>({workout.date})</small></h2>
                 <p>{workout.exercises.map(ex => ex.name).join(', ')}</p>

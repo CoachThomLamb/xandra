@@ -6,6 +6,7 @@ import './App.css';
 import WorkoutDetail from './components/WorkoutDetail';
 import AdminDashboard from './components/AdminDashboard';
 import UserWorkouts from './components/UserWorkouts';
+import UserWorkoutDetail from './components/UserWorkoutDetail';
 import { auth, db, getUserRole } from './firebaseConfig';
 
 function Workouts() {
@@ -112,6 +113,7 @@ function App() {
               <Route path="/workout/:index" element={<WorkoutDetail />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
+              <Route path="/user-workouts/:userId/workouts/:workoutId" element={<UserWorkoutDetail />} />
             </Routes>
           </div>
         ) : (
