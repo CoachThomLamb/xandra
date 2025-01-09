@@ -41,8 +41,24 @@ function WorkoutDetail() {
     try {
       const user = auth.currentUser;
       if (user) {
+        // Clean the exercises data before saving
+        const cleanExercises = exercises.map(exercise => ({
+          name: exercise.name || '',
+          weight: exercise.weight || '',
+          reps: exercise.reps || '',
+          rest: exercise.rest || '',
+          notes: exercise.notes || '',
+          completed: Boolean(exercise.completed)
+        }));
+
+        const workoutData = {
+          title: title || 'Untitled Workout',
+          exercises: cleanExercises,
+          date: date || new Date().toISOString().split('T')[0]
+        };
+
         const workoutRef = collection(db, 'users', user.uid, 'workouts');
-        await addDoc(workoutRef, { title, exercises, date });
+        await addDoc(workoutRef, workoutData);
         console.log('Workout saved to Firebase');
       } else {
         console.log('No user is signed in');

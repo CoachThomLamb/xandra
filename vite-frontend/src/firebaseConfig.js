@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD3s06D0y79sZkeKXArZU7tgcSvbgx4lqI",
@@ -53,6 +53,22 @@ const assignWorkoutTemplateToUser = async (templateId, userId) => {
   } catch (error) {
     console.error('Error assigning workout template to user:', error);
   }
+};
+
+// Function to get standard exercises
+export const getStandardExercises = async () => {
+  const exercisesRef = collection(db, 'standard_exercises');
+  const snapshot = await getDocs(exercisesRef);
+  return snapshot.docs.map(doc => doc.data().name);
+};
+
+// Function to add a standard exercise
+export const addStandardExercise = async (name) => {
+  const exercisesRef = collection(db, 'standard_exercises');
+  await addDoc(exercisesRef, {
+    name,
+    createdAt: serverTimestamp()
+  });
 };
 
 export { auth, db, getUserRole, assignWorkoutTemplateToUser };
