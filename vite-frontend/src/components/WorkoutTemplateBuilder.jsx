@@ -1,10 +1,41 @@
-import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
-  const [exercises, setExercises] = useState([{ name: 'Squats', sets: [{ setNumber: 1, reps: '10', load: '225' }] }]);
+  const [exercises, setExercises] = useState([{ name: '', sets: [{ setNumber: 1, reps: '', load: '' }] }]);
+  const [exerciseNames, setExerciseNames] = useState([]);
+  const [userNames, setUserNames] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const fetchExerciseNames = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'exercises'));
+        const names = querySnapshot.docs.map(doc => doc.data().name);
+        setExerciseNames(names);
+      } catch (error) {
+        console.error('Error fetching exercise names:', error);
+      }
+    };
+
+    const fetchUserNames = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'users'));
+        const names = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return `${data.firstName} ${data.lastName}`;
+        });
+        setUserNames(names);
+      } catch (error) {
+        console.error('Error fetching user names:', error);
+      }
+    };
+
+    fetchExerciseNames();
+    fetchUserNames();
+  }, []);
 
   const addExercise = () => {
     setExercises([...exercises, { name: '', sets: [{ setNumber: 1, reps: '', load: '' }] }]);
@@ -55,6 +86,14 @@ const WorkoutTemplateBuilder = () => {
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const filteredUserNames = userNames.filter(name =>
+    name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
       <h1>Workout Template Builder</h1>
@@ -62,14 +101,31 @@ const WorkoutTemplateBuilder = () => {
         <label>Title:</label>
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
+      <div>
+        <label>Search User:</label>
+        <input type="text" value={searchTerm} onChange={handleSearchChange} placeholder="Search for a user" />
+        {searchTerm && (
+          <ul>
+            {filteredUserNames.map((name, index) => (
+              <li key={index}>{name}</li>
+            ))}
+          </ul>
+        )}
+      </div>
       {exercises.map((exercise, i) => (
         <div key={i}>
           <label>Exercise Name:</label>
           <input
             type="text"
+            list={`exercise-names-${i}`}
             value={exercise.name}
             onChange={(e) => updateExercise(i, 'name', e.target.value)}
           />
+          <datalist id={`exercise-names-${i}`}>
+            {exerciseNames.map((name, index) => (
+              <option key={index} value={name} />
+            ))}
+          </datalist>
           {exercise.sets.map((set, j) => (
             <div key={j}>
               <label>Set {set.setNumber}:</label>
