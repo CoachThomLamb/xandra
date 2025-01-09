@@ -1,24 +1,45 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { collection, getDocs } from 'firebase/firestore';
 import './App.css';
+import WorkoutDetail from './components/WorkoutDetail';
+import AdminDashboard from './components/AdminDashboard';
+import UserWorkouts from './components/UserWorkouts';
+import UserWorkoutDetail from './components/UserWorkoutDetail';
+import { auth, db, getUserRole } from './firebaseConfig';
+import WorkoutTemplateBuilder from './components/WorkoutTemplateBuilder';
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
-  const [title, setTitle] = useState('');
-  const [exercises, setExercises] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedWorkouts = JSON.parse(localStorage.getItem('workouts')) || [];
-    setWorkouts(storedWorkouts);
+    const fetchWorkouts = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const workoutsCollection = collection(db, 'users', user.uid, 'workouts');
+        const workoutSnapshot = await getDocs(workoutsCollection);
+        const workoutList = workoutSnapshot.docs.map(doc => doc.data());
+        setWorkouts(workoutList);
+      } else {
+        const storedWorkouts = JSON.parse(localStorage.getItem('workouts')) || [];
+        const parsedWorkouts = storedWorkouts.map(workout => ({
+          ...workout,
+          exercises: Array.isArray(workout.exercises) ? workout.exercises : []
+        }));
+        setWorkouts(parsedWorkouts);
+      }
+    };
+
+    fetchWorkouts();
   }, []);
 
   const addWorkout = () => {
     const newWorkout = {
       title: 'New Workout',
-      exercises: '',
+      exercises: [],
       date: new Date().toISOString().split('T')[0],
-      clientId: null
     };
     const updatedWorkouts = [...workouts, newWorkout];
     setWorkouts(updatedWorkouts);
@@ -34,7 +55,7 @@ function Workouts() {
         {workouts.map((workout, index) => (
           <div key={index} className="workout-item">
             <h2>{workout.title} <small>({workout.date})</small></h2>
-            <p>{workout.exercises}</p>
+            <p>{workout.exercises.map(ex => ex.name).join(', ')}</p>
             <Link to={`/workout/${index}`}>View Details</Link>
           </div>
         ))}
@@ -45,60 +66,65 @@ function Workouts() {
   );
 }
 
-function WorkoutDetail() {
-  const { index } = useParams();
-  const [workouts, setWorkouts] = useState(JSON.parse(localStorage.getItem('workouts')) || []);
-  const workout = workouts[index];
-  const [title, setTitle] = useState(workout.title);
-  const [exercises, setExercises] = useState(workout.exercises);
-  const [date, setDate] = useState(workout.date);
-  const [clientId, setClientId] = useState(workout.clientId);
+function App() {
+  
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const updateWorkout = () => {
-    const updatedWorkout = { ...workout, title, exercises, date, clientId };
-    const updatedWorkouts = [...workouts];
-    updatedWorkouts[index] = updatedWorkout;
-    setWorkouts(updatedWorkouts);
-    localStorage.setItem('workouts', JSON.stringify(updatedWorkouts));
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUser(user);
+        const role = await getUserRole(user.uid);
+        setIsAdmin(role === 'admin');
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Error signing in: ", error);
+    }
   };
 
-  if (!workout) {
-    return <div>Workout not found</div>;
-  }
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
-  return (
-    <div>
-      <h1>Edit Workout</h1>
-      <div>
-        <label>Title:</label>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-      </div>
-      <div>
-        <label>Exercises:</label>
-        <input type="text" value={exercises} onChange={(e) => setExercises(e.target.value)} />
-      </div>
-      <div>
-        <label>Date:</label>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-      </div>
-      <div>
-        <label>Client ID:</label>
-        <input type="text" value={clientId} onChange={(e) => setClientId(e.target.value)} />
-      </div>
-      <button onClick={updateWorkout}>Save</button>
-      <Link to="/">Back to Workouts</Link>
-      <button onClick={() => window.history.back()}>Return to Workouts</button>
-    </div>
-  );
-}
-
-function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Workouts />} />
-        <Route path="/workout/:index" element={<WorkoutDetail />} />
-      </Routes>
+      <div>
+        {user ? (
+          <div>
+            <button onClick={handleLogout}>Logout</button>
+            {isAdmin && <Link to="/admin">Admin Dashboard</Link>}
+            <Routes>
+              <Route path="/" element={<Workouts />} />
+              <Route path="/workout/:index" element={<WorkoutDetail />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
+              <Route path="/user-workouts/:userId/workouts/:workoutId" element={<UserWorkoutDetail />} />
+              <Route path="/workout-template-builder" element={<WorkoutTemplateBuilder />} />
+            </Routes>
+          </div>
+        ) : (
+          <div>
+            <button onClick={handleLogin}>Login with Google</button>
+          </div>
+        )}
+      </div>
     </Router>
   );
 }
