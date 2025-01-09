@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD3s06D0y79sZkeKXArZU7tgcSvbgx4lqI",
@@ -17,18 +17,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// export const fetchDocuments = async (collectionName) => {
-//     try {
-//       const querySnapshot = await getDocs(collection(db, collectionName));
-//       const documents = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-//       return documents;
-//     } catch (error) {
-//       console.error('Error fetching documents:', error);
-//       throw error;
-//     }
-// };
-// console.log('fetchDocuments:', await fetchDocuments("test"));
-
 const getUserRole = async (userId) => {
   const userDoc = await getDoc(doc(db, 'users', userId));
   if (userDoc.exists()) {
@@ -38,4 +26,33 @@ const getUserRole = async (userId) => {
   }
 };
 
-export { auth, db, getUserRole };
+const assignWorkoutTemplateToUser = async (templateId, userId) => {
+  try {
+    const templateDoc = await getDoc(doc(db, 'workout-templates', templateId));
+    if (templateDoc.exists()) {
+      const templateData = templateDoc.data();
+      const userWorkoutsRef = collection(db, 'users', userId, 'workouts');
+      const newWorkoutRef = await addDoc(userWorkoutsRef, { title: templateData.title, date: new Date().toISOString().split('T')[0] });
+
+      const exercisesSnapshot = await getDocs(collection(templateDoc.ref, 'exercises'));
+      exercisesSnapshot.forEach(async (exerciseDoc) => {
+        const exerciseData = exerciseDoc.data();
+        const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), { name: exerciseData.name });
+
+        const setsSnapshot = await getDocs(collection(exerciseDoc.ref, 'sets'));
+        setsSnapshot.forEach(async (setDoc) => {
+          const setData = setDoc.data();
+          await addDoc(collection(newExerciseRef, 'sets'), setData);
+        });
+      });
+
+      console.log('Workout template assigned to user');
+    } else {
+      console.error('Workout template not found');
+    }
+  } catch (error) {
+    console.error('Error assigning workout template to user:', error);
+  }
+};
+
+export { auth, db, getUserRole, assignWorkoutTemplateToUser };

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import { db } from '../firebaseConfig';
+import { db, assignWorkoutTemplateToUser } from '../firebaseConfig';
 import withAdminProtection from './withAdminProtection';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
-  const [workouts, setWorkouts] = useState([]);
+  const [workoutTemplates, setWorkoutTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -15,19 +17,48 @@ const AdminDashboard = () => {
       setUsers(usersData);
     };
 
-    const fetchWorkouts = async () => {
-      const querySnapshot = await getDocs(collection(db, 'users', 'workouts'));
-      const workoutsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setWorkouts(workoutsData);
+    const fetchWorkoutTemplates = async () => {
+      const querySnapshot = await getDocs(collection(db, 'workout-templates'));
+      const templatesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setWorkoutTemplates(templatesData);
     };
 
     fetchUsers();
-    fetchWorkouts();
+    fetchWorkoutTemplates();
   }, []);
+
+  const handleAssignTemplate = async () => {
+    if (selectedTemplate && selectedUser) {
+      await assignWorkoutTemplateToUser(selectedTemplate, selectedUser);
+      alert('Workout template assigned successfully');
+    } else {
+      alert('Please select a user and a workout template');
+    }
+  };
 
   return (
     <div>
       <h1>Admin Dashboard</h1>
+      <h2>Assign Workout Template</h2>
+      <div>
+        <label>Select User:</label>
+        <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}>
+          <option value="">Select a user</option>
+          {users.map(user => (
+            <option key={user.id} value={user.id}>{user.email}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label>Select Workout Template:</label>
+        <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)}>
+          <option value="">Select a template</option>
+          {workoutTemplates.map(template => (
+            <option key={template.id} value={template.id}>{template.title}</option>
+          ))}
+        </select>
+      </div>
+      <button onClick={handleAssignTemplate}>Assign Template</button>
       <h2>Users</h2>
       <ul>
         {users.map(user => (
@@ -36,12 +67,6 @@ const AdminDashboard = () => {
               {user.email} - {user.role}
             </Link>
           </li>
-        ))}
-      </ul>
-      <h2>Workouts</h2>
-      <ul>
-        {workouts.map(workout => (
-          <li key={workout.id}>{workout.title} - {workout.date}</li>
         ))}
       </ul>
     </div>

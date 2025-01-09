@@ -51,7 +51,7 @@ const UserWorkoutDetail = () => {
           </tr>
         </thead>
         <tbody>
-          {workout.exercises.map((exercise, index) => (
+          {(workout.exercises || []).map((exercise, index) => (
             <tr key={index}>
               <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.name}</td>
               <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.weight}</td>
