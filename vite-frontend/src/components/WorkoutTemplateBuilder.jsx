@@ -5,37 +5,32 @@ import { db } from '../firebaseConfig';
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
   const [exercises, setExercises] = useState([{ name: '', sets: [{ setNumber: 1, reps: '', load: '' }] }]);
+  const [templates, setTemplates] = useState([]);
   const [exerciseNames, setExerciseNames] = useState([]);
-  const [userNames, setUserNames] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchExerciseNames = async () => {
+    const fetchTemplates = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'exercises'));
-        const names = querySnapshot.docs.map(doc => doc.data().name);
-        setExerciseNames(names);
+        const querySnapshot = await getDocs(collection(db, 'workout-templates'));
+        const templatesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setTemplates(templatesData);
       } catch (error) {
-        console.error('Error fetching exercise names:', error);
+        console.error('Error fetching workout templates:', error);
       }
     };
 
-    const fetchUserNames = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
-        const names = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return `${data.firstName} ${data.lastName}`;
-        });
-        setUserNames(names);
-      } catch (error) {
-        console.error('Error fetching user names:', error);
-      }
-    };
-
-    fetchExerciseNames();
-    fetchUserNames();
+    fetchTemplates();
   }, []);
+
+  const fetchExerciseNames = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'exercises'));
+      const names = querySnapshot.docs.map(doc => doc.data().name);
+      setExerciseNames(names);
+    } catch (error) {
+      console.error('Error fetching exercise names:', error);
+    }
+  };
 
   const addExercise = () => {
     setExercises([...exercises, { name: '', sets: [{ setNumber: 1, reps: '', load: '' }] }]);
@@ -73,7 +68,7 @@ const WorkoutTemplateBuilder = () => {
 
   const saveWorkoutTemplate = async () => {
     try {
-      const workoutTemplateRef = await addDoc(collection(db, 'workout-templates'), { title });
+      const workoutTemplateRef = await addDoc(collection(db, 'workout-templates'), { title, exercises });
       for (const exercise of exercises) {
         const exerciseRef = await addDoc(collection(workoutTemplateRef, 'exercises'), { name: exercise.name });
         for (const set of exercise.sets) {
@@ -86,31 +81,12 @@ const WorkoutTemplateBuilder = () => {
     }
   };
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const filteredUserNames = userNames.filter(name =>
-    name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div>
       <h1>Workout Template Builder</h1>
       <div>
         <label>Title:</label>
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-      </div>
-      <div>
-        <label>Search User:</label>
-        <input type="text" value={searchTerm} onChange={handleSearchChange} placeholder="Search for a user" />
-        {searchTerm && (
-          <ul>
-            {filteredUserNames.map((name, index) => (
-              <li key={index}>{name}</li>
-            ))}
-          </ul>
-        )}
       </div>
       {exercises.map((exercise, i) => (
         <div key={i}>
@@ -120,6 +96,7 @@ const WorkoutTemplateBuilder = () => {
             list={`exercise-names-${i}`}
             value={exercise.name}
             onChange={(e) => updateExercise(i, 'name', e.target.value)}
+            onFocus={() => fetchExerciseNames()}
           />
           <datalist id={`exercise-names-${i}`}>
             {exerciseNames.map((name, index) => (
@@ -128,16 +105,15 @@ const WorkoutTemplateBuilder = () => {
           </datalist>
           {exercise.sets.map((set, j) => (
             <div key={j}>
-              <label>Set {set.setNumber}:</label>
+              <label>Set {set.setNumber} Reps:</label>
               <input
                 type="text"
-                placeholder="Reps"
                 value={set.reps}
                 onChange={(e) => updateSet(i, j, 'reps', e.target.value)}
               />
+              <label>Load:</label>
               <input
                 type="text"
-                placeholder="Load"
                 value={set.load}
                 onChange={(e) => updateSet(i, j, 'load', e.target.value)}
               />

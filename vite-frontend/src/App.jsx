@@ -20,13 +20,21 @@ function Workouts() {
       if (user) {
         const workoutsCollection = collection(db, 'users', user.uid, 'workouts');
         const workoutSnapshot = await getDocs(workoutsCollection);
-        const workoutList = workoutSnapshot.docs.map(doc => doc.data());
+        const workoutList = workoutSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            title: data.title || 'Untitled Workout',
+            exercises: Array.isArray(data.exercises) ? data.exercises : [],
+            date: data.date || new Date().toISOString().split('T')[0],
+          };
+        });
         setWorkouts(workoutList);
       } else {
         const storedWorkouts = JSON.parse(localStorage.getItem('workouts')) || [];
         const parsedWorkouts = storedWorkouts.map(workout => ({
-          ...workout,
-          exercises: Array.isArray(workout.exercises) ? workout.exercises : []
+          title: workout.title || 'Untitled Workout',
+          exercises: Array.isArray(workout.exercises) ? workout.exercises : [],
+          date: workout.date || new Date().toISOString().split('T')[0],
         }));
         setWorkouts(parsedWorkouts);
       }
@@ -55,7 +63,6 @@ function Workouts() {
         {workouts.map((workout, index) => (
           <div key={index} className="workout-item">
             <h2>{workout.title} <small>({workout.date})</small></h2>
-            <p>{workout.exercises.map(ex => ex.name).join(', ')}</p>
             <Link to={`/workout/${index}`}>View Details</Link>
           </div>
         ))}
@@ -117,6 +124,7 @@ function App() {
               <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
               <Route path="/user-workouts/:userId/workouts/:workoutId" element={<UserWorkoutDetail />} />
               <Route path="/workout-template-builder" element={<WorkoutTemplateBuilder />} />
+              <Route path="/admin/user/:userId" element={<UserWorkouts />} />
             </Routes>
           </div>
         ) : (

@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { collection, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const UserWorkouts = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchWorkouts = async () => {
       try {
-        const q = query(collection(db, 'users', userId, 'workouts'));
-        const querySnapshot = await getDocs(q);
-        const workoutsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setWorkouts(workoutsData);
+        const workoutsCollection = collection(db, 'users', userId, 'workouts');
+        const workoutSnapshot = await getDocs(workoutsCollection);
+        const workoutList = workoutSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setWorkouts(workoutList);
       } catch (error) {
         console.error('Error fetching workouts:', error);
         setError('Error fetching workouts. Please try again later.');
@@ -24,48 +28,31 @@ const UserWorkouts = () => {
     fetchWorkouts();
   }, [userId]);
 
-  if (error) {
-    return <div>{error}</div>;
-  }
+  const currentWorkouts = workouts.filter(workout => !workout.completed);
+  const pastWorkouts = workouts.filter(workout => workout.completed);
 
   return (
-    <div style={{ height: '100vh', overflow: 'hidden' }}>
-      <h1>Workouts for User: {userId}</h1>
-      <div className="exercise-container">
-        {workouts.length > 0 ? (
-          workouts.map((workout) => (
-            <Link
-              key={workout.id}
-              to={`/user-workouts/${userId}/workouts/${workout.id}`}
-              style={{
-                textDecoration: 'none',
-                color: 'inherit',
-                width: '100%',
-                maxWidth: '600px',
-                display: 'block'
-              }}
-            >
-              <div
-                className="exercise-row"
-                style={{
-                  backgroundColor: 'grey',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  width: '100%',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <h2>
-                  {workout.title} <small>({workout.date})</small>
-                </h2>
-                <p>{(workout.exercises || []).map((ex) => ex.name).join(', ')}</p>
-              </div>
-            </Link>
-          ))
-        ) : (
-          <p>No workouts found for this user.</p>
-        )}
-      </div>
+    <div>
+      <h1>User Workouts</h1>
+      {error && <p>{error}</p>}
+
+      <h2>Current Workouts</h2>
+      <ul>
+        {currentWorkouts.map(workout => (
+          <li key={workout.id}>
+            {workout.title} - {workout.date}
+          </li>
+        ))}
+      </ul>
+
+      <h2>Past Workouts</h2>
+      <ul>
+        {pastWorkouts.map(workout => (
+          <li key={workout.id}>
+            {workout.title} - {workout.date}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

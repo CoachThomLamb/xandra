@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useParams, Link } from 'react-router-dom';
+import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const UserWorkoutDetail = () => {
   const { userId, workoutId } = useParams();
+  
   const [workout, setWorkout] = useState(null);
   const [error, setError] = useState(null);
   const [completedSets, setCompletedSets] = useState({});
@@ -15,6 +16,29 @@ const UserWorkoutDetail = () => {
       [`${exerciseIndex}-${setIndex}`]: !prev[`${exerciseIndex}-${setIndex}`],
     }));
   };
+
+  const handleInputChange = (exerciseIndex, setIndex, field, value) => {
+    setWorkout((prevWorkout) => {
+      const updatedExercises = [...prevWorkout.exercises];
+      updatedExercises[exerciseIndex].sets[setIndex][field] = value;
+      return { ...prevWorkout, exercises: updatedExercises };
+    });
+  };
+
+  const saveWorkout = async () => {
+    try {
+      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+      await updateDoc(workoutDocRef, workout);
+      alert('Workout saved successfully!');
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      alert('Error saving workout. Please try again later.');
+    }
+  };
+
+  // const goToUserWorkouts = () => {
+  //   history.push(`/users-workouts/${userId}`);
+  // };
 
   useEffect(() => {
     const fetchWorkout = async () => {
@@ -77,21 +101,48 @@ const UserWorkoutDetail = () => {
         <tbody>
           {(workout.exercises || []).map((exercise, exerciseIndex) =>
             exercise.sets.map((set, setIndex) => (
-              <tr key={`${exerciseIndex}-${setIndex}`}>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.name}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{set.reps}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{set.load}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>
-                  <button onClick={() => handleCompleteSet(exerciseIndex, setIndex)}>
-                    {completedSets[`${exerciseIndex}-${setIndex}`] ? 'Undo' : 'Complete'}
-                  </button>
-                </td>
-              </tr>
+              <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
+                <tr>
+                  <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.name}</td>
+                  <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
+                  <td style={{ border: '1px solid black', padding: '8px' }}>
+                    <input
+                      type="number"
+                      value={set.reps}
+                      onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
+                      style={{ width: '50px' }}
+                    />
+                  </td>
+                  <td style={{ border: '1px solid black', padding: '8px' }}>
+                    <input
+                      type="number"
+                      value={set.load}
+                      onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
+                      style={{ width: '50px' }}
+                    />
+                  </td>
+                  <td style={{ border: '1px solid black', padding: '8px' }}>
+                    <button onClick={() => handleCompleteSet(exerciseIndex, setIndex)}>
+                      {completedSets[`${exerciseIndex}-${setIndex}`] ? 'Undo' : 'Complete'}
+                    </button>
+                  </td>
+                </tr>
+                {setIndex === exercise.sets.length - 1 && exerciseIndex < workout.exercises.length - 1 && (
+                  <tr>
+                    <td colSpan="5">
+                      <hr />
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))
           )}
         </tbody>
       </table>
+      <button onClick={saveWorkout} style={{ marginTop: '20px' }}>Save Workout</button>
+      <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
+        <button>Back to Workouts</button>
+      </Link>
     </div>
   );
 };
