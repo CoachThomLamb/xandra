@@ -88,7 +88,7 @@ const UserWorkoutDetail = () => {
   }
 
   return (
-    <div style={{ overflowY: 'auto' }}>
+    <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 200px)', overflowX: 'hidden' }}>
       <h1>{workout.title}</h1>
       <p>Date: {workout.date}</p>
       <h2>Exercises</h2>
