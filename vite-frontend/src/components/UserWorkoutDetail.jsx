@@ -88,66 +88,68 @@ const UserWorkoutDetail = () => {
   }
 
   return (
-    <div>
+    <div style={{ overflowY: 'auto' }}>
       <h1>{workout.title}</h1>
       <p>Date: {workout.date}</p>
       <h2>Exercises</h2>
-      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead>
-          <tr>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Exercise</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(workout.exercises || []).map((exercise, exerciseIndex) =>
-            exercise.sets.map((set, setIndex) => (
-              <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
-                <tr>
-                  <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.name}</td>
-                  <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
-                  <td style={{ border: '1px solid black', padding: '8px' }}>
-                    <input
-                      type="number"
-                      value={set.reps}
-                      onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
-                      style={{ width: '50px' }}
-                    />
-                  </td>
-                  <td style={{ border: '1px solid black', padding: '8px' }}>
-                    <input
-                      type="number"
-                      value={set.load}
-                      onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
-                      style={{ width: '50px' }}
-                    />
-                  </td>
-                  <td style={{ border: '1px solid black', padding: '8px' }}>
-                    <button onClick={() => handleCompleteSet(exerciseIndex, setIndex)}>
-                      {completedSets[`${exerciseIndex}-${setIndex}`] ? 'Undo' : 'Complete'}
-                    </button>
-                  </td>
-                </tr>
-                {setIndex === exercise.sets.length - 1 && (
+      <div>
+        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+          <thead>
+            <tr>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Exercise</th>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(workout.exercises || []).map((exercise, exerciseIndex) =>
+              exercise.sets.map((set, setIndex) => (
+                <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
                   <tr>
-                    <td colSpan="5" style={{ border: '1px solid black', padding: '8px' }}>
-                      <label>Notes:</label>
-                      <textarea
-                        value={notes[exerciseIndex] || ''}
-                        onChange={(e) => handleNotesChange(exerciseIndex, e.target.value)}
-                        style={{ width: '100%' }}
+                    <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.name}</td>
+                    <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
+                    <td style={{ border: '1px solid black', padding: '8px' }}>
+                      <input
+                        type="number"
+                        value={set.reps}
+                        onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
+                        style={{ width: '50px' }}
                       />
                     </td>
+                    <td style={{ border: '1px solid black', padding: '8px' }}>
+                      <input
+                        type="number"
+                        value={set.load}
+                        onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
+                        style={{ width: '50px' }}
+                      />
+                    </td>
+                    <td style={{ border: '1px solid black', padding: '8px' }}>
+                      <button onClick={() => handleCompleteSet(exerciseIndex, setIndex)}>
+                        {completedSets[`${exerciseIndex}-${setIndex}`] ? 'Undo' : 'Complete'}
+                      </button>
+                    </td>
                   </tr>
-                )}
-              </React.Fragment>
-            ))
-          )}
-        </tbody>
-      </table>
+                  {setIndex === exercise.sets.length - 1 && (
+                    <tr>
+                      <td colSpan="5" style={{ border: '1px solid black', padding: '8px' }}>
+                        <label>Notes:</label>
+                        <textarea
+                          value={notes[exerciseIndex] || ''}
+                          onChange={(e) => handleNotesChange(exerciseIndex, e.target.value)}
+                          style={{ width: '100%' }}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
       <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
         <button>Back to Workouts</button>
