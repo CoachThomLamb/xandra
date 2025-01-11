@@ -9,6 +9,7 @@ const UserWorkoutDetail = () => {
   const [workout, setWorkout] = useState(null);
   const [error, setError] = useState(null);
   const [completedSets, setCompletedSets] = useState({});
+  const [notes, setNotes] = useState({});
 
   const handleCompleteSet = (exerciseIndex, setIndex) => {
     setCompletedSets((prev) => ({
@@ -25,10 +26,17 @@ const UserWorkoutDetail = () => {
     });
   };
 
+  const handleNotesChange = (exerciseIndex, value) => {
+    setNotes((prev) => ({
+      ...prev,
+      [exerciseIndex]: value,
+    }));
+  };
+
   const completeWorkout = async () => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, { ...workout, completed: true });
+      await updateDoc(workoutDocRef, { ...workout, completed: true, notes });
       alert('Workout completed successfully!');
     } catch (error) {
       console.error('Error completing workout:', error);
@@ -123,10 +131,15 @@ const UserWorkoutDetail = () => {
                     </button>
                   </td>
                 </tr>
-                {setIndex === exercise.sets.length - 1 && exerciseIndex < workout.exercises.length - 1 && (
+                {setIndex === exercise.sets.length - 1 && (
                   <tr>
-                    <td colSpan="5">
-                      <hr />
+                    <td colSpan="5" style={{ border: '1px solid black', padding: '8px' }}>
+                      <label>Notes:</label>
+                      <textarea
+                        value={notes[exerciseIndex] || ''}
+                        onChange={(e) => handleNotesChange(exerciseIndex, e.target.value)}
+                        style={{ width: '100%' }}
+                      />
                     </td>
                   </tr>
                 )}
