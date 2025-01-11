@@ -33,7 +33,7 @@ const AdminDashboard = () => {
       const templateData = templateDoc.data();
 
       const programmingRef = collection(db, 'users', userId, 'workouts');
-      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title });
+      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title, completed: false });
 
       const exercisesCollection = collection(templateDoc.ref, 'exercises');
       const exercisesSnapshot = await getDocs(exercisesCollection);

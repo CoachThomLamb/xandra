@@ -25,20 +25,16 @@ const UserWorkoutDetail = () => {
     });
   };
 
-  const saveWorkout = async () => {
+  const completeWorkout = async () => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, workout);
-      alert('Workout saved successfully!');
+      await updateDoc(workoutDocRef, { ...workout, completed: true });
+      alert('Workout completed successfully!');
     } catch (error) {
-      console.error('Error saving workout:', error);
-      alert('Error saving workout. Please try again later.');
+      console.error('Error completing workout:', error);
+      alert('Error completing workout. Please try again later.');
     }
   };
-
-  // const goToUserWorkouts = () => {
-  //   history.push(`/users-workouts/${userId}`);
-  // };
 
   useEffect(() => {
     const fetchWorkout = async () => {
@@ -139,7 +135,7 @@ const UserWorkoutDetail = () => {
           )}
         </tbody>
       </table>
-      <button onClick={saveWorkout} style={{ marginTop: '20px' }}>Save Workout</button>
+      <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
         <button>Back to Workouts</button>
       </Link>

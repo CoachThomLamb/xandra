@@ -7,6 +7,7 @@ const WorkoutTemplateBuilder = () => {
   const [exercises, setExercises] = useState([{ name: '', sets: [{ setNumber: 1, reps: '', load: '' }] }]);
   const [templates, setTemplates] = useState([]);
   const [exerciseNames, setExerciseNames] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -75,6 +76,8 @@ const WorkoutTemplateBuilder = () => {
           await addDoc(collection(exerciseRef, 'sets'), set);
         }
       }
+      setSuccessMessage('Workout template saved successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000); // Clear message after 3 seconds
       console.log('Workout template saved to Firebase');
     } catch (error) {
       console.error('Error saving workout template to Firebase:', error);
@@ -84,6 +87,7 @@ const WorkoutTemplateBuilder = () => {
   return (
     <div>
       <h1>Workout Template Builder</h1>
+      {successMessage && <p>{successMessage}</p>}
       <div>
         <label>Title:</label>
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />

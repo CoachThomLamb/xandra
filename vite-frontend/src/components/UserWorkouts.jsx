@@ -40,7 +40,9 @@ const UserWorkouts = () => {
       <ul>
         {currentWorkouts.map(workout => (
           <li key={workout.id}>
-            {workout.title} - {workout.date}
+            <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
+              {workout.title} - {workout.date}
+            </Link>
           </li>
         ))}
       </ul>
@@ -49,7 +51,9 @@ const UserWorkouts = () => {
       <ul>
         {pastWorkouts.map(workout => (
           <li key={workout.id}>
-            {workout.title} - {workout.date}
+            <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
+              {workout.title} - {workout.date}
+            </Link>
           </li>
         ))}
       </ul>
