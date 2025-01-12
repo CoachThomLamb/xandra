@@ -70,7 +70,7 @@ const WorkoutTemplateBuilder = () => {
 
   const saveWorkoutTemplate = async () => {
     try {
-      const workoutTemplateRef = await addDoc(collection(db, 'workout-templates'), { title });
+      const workoutTemplateRef = await addDoc(collection(db, 'workout-templates'), { title, coachNotes });
       for (const exercise of exercises) {
         const exerciseRef = await addDoc(collection(workoutTemplateRef, 'exercises'), { name: exercise.name, orderBy: exercise.orderBy });
         for (const set of exercise.sets) {

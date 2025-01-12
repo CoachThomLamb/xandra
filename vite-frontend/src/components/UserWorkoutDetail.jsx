@@ -54,8 +54,6 @@ const UserWorkoutDetail = () => {
 
           const exercisesCollection = collection(workoutDocRef, 'exercises');
           const exercisesSnapshot = await getDocs(exercisesCollection);
-          console.log('exercisesSnapshot', exercisesSnapshot.docs);
-          exercisesSnapshot.docs.sort((a, b) => b.data().orderBy - a.data().orderBy);
           let exercisesData = await Promise.all(
             exercisesSnapshot.docs.map(async (exerciseDoc) => {
               const setsCollection = collection(exerciseDoc.ref, 'sets');
@@ -93,68 +91,69 @@ const UserWorkoutDetail = () => {
     <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 200px)', overflowX: 'hidden' }}>
       <h1>{workout.title}</h1>
       <p>Date: {workout.date}</p>
+      <h2>Coach Notes</h2>
+      <p>{workout.coachNotes}</p>
       <h2>Exercises</h2>
       <div>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-          <thead>
-            <tr>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Exercise</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
-            </tr>
-          </thead>
           <tbody>
-            {(workout.exercises || []).map((exercise, exerciseIndex) =>
-              exercise.sets.map((set, setIndex) => (
-                <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
-                  <tr>
-                    <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.name}</td>
-                    <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
-                    <td style={{ border: '1px solid black', padding: '8px' }}>
-                      <input
-                        type="number"
-                        value={set.reps}
-                        onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
-                        style={{ width: '50px' }}
-                      />
-                    </td>
-                    <td style={{ border: '1px solid black', padding: '8px' }}>
-                      <input
-                        type="number"
-                        value={set.load}
-                        onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
-                        style={{ width: '50px' }}
-                      />
-                    </td>
-                    <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center' }}>
-                      <span
-                        onClick={() => handleCompleteSet(exerciseIndex, setIndex)}
-                        style={{
-                          cursor: 'pointer',
-                          color: completedSets[`${exerciseIndex}-${setIndex}`] ? 'green' : 'black',
-                        }}
-                      >
-                        {completedSets[`${exerciseIndex}-${setIndex}`] ? '✔️' : '⬜'}
-                      </span>
-                    </td>
-                  </tr>
-                  {setIndex === exercise.sets.length - 1 && (
+            {(workout.exercises || []).map((exercise, exerciseIndex) => (
+              <React.Fragment key={exerciseIndex}>
+                <tr>
+                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                    {exercise.name}
+                  </td>
+                </tr>
+                <tr>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
+                </tr>
+                {exercise.sets.map((set, setIndex) => (
+                  <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
                     <tr>
-                      <td colSpan="5" style={{ border: '1px solid black', padding: '8px' }}>
-                        <label>Notes:</label>
-                        <textarea
-                          value={notes[exerciseIndex] || ''}
-                          onChange={(e) => handleNotesChange(exerciseIndex, e.target.value)}
-                          style={{ width: '100%' }}
+                      <td style={{ border: '1px solid black', padding: '8px' }}>
+                        <input
+                          type="number"
+                          value={set.reps}
+                          onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
+                          style={{ width: '50px' }}
                         />
                       </td>
+                      <td style={{ border: '1px solid black', padding: '8px' }}>
+                        <input
+                          type="number"
+                          value={set.load}
+                          onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
+                          style={{ width: '50px' }}
+                        />
+                      </td>
+                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center' }}>
+                        <span
+                          onClick={() => handleCompleteSet(exerciseIndex, setIndex)}
+                          style={{
+                            cursor: 'pointer',
+                            color: completedSets[`${exerciseIndex}-${setIndex}`] ? 'green' : 'black',
+                          }}
+                        >
+                          {completedSets[`${exerciseIndex}-${setIndex}`] ? '✔️' : '⬜'}
+                        </span>
+                      </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))
-            )}
+                  </React.Fragment>
+                ))}
+                <tr>
+                  <td colSpan="3" style={{ border: '1px solid black', padding: '8px' }}>
+                    <label>Notes:</label>
+                    <textarea
+                      value={notes[exerciseIndex] || ''}
+                      onChange={(e) => handleNotesChange(exerciseIndex, e.target.value)}
+                      style={{ width: '100%' }}
+                    />
+                  </td>
+                </tr>
+              </React.Fragment>
+            ))}
           </tbody>
         </table>
       </div>
