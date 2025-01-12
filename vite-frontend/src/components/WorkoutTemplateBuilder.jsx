@@ -4,7 +4,8 @@ import { db } from '../firebaseConfig';
 
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
-  const [exercises, setExercises] = useState([{ name: '', sets: [{ setNumber: 1, reps: '', load: '' }] }]);
+  const [coachNotes, setCoachNotes] = useState('');
+  const [exercises, setExercises] = useState([{ name: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: 0 }]);
   const [templates, setTemplates] = useState([]);
   const [exerciseNames, setExerciseNames] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
@@ -34,7 +35,7 @@ const WorkoutTemplateBuilder = () => {
   };
 
   const addExercise = () => {
-    setExercises([...exercises, { name: '', sets: [{ setNumber: 1, reps: '', load: '' }] }]);
+    setExercises([...exercises, { name: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: exercises.length }]);
   };
 
   const updateExercise = (index, field, value) => {
@@ -69,9 +70,9 @@ const WorkoutTemplateBuilder = () => {
 
   const saveWorkoutTemplate = async () => {
     try {
-      const workoutTemplateRef = await addDoc(collection(db, 'workout-templates'), { title, exercises });
+      const workoutTemplateRef = await addDoc(collection(db, 'workout-templates'), { title });
       for (const exercise of exercises) {
-        const exerciseRef = await addDoc(collection(workoutTemplateRef, 'exercises'), { name: exercise.name });
+        const exerciseRef = await addDoc(collection(workoutTemplateRef, 'exercises'), { name: exercise.name, orderBy: exercise.orderBy });
         for (const set of exercise.sets) {
           await addDoc(collection(exerciseRef, 'sets'), set);
         }
@@ -91,6 +92,10 @@ const WorkoutTemplateBuilder = () => {
       <div>
         <label>Title:</label>
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+      </div>
+      <div>
+        <label>Coach Notes:</label>
+        <textarea value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} style={{ width: '100%' }} />
       </div>
       {exercises.map((exercise, i) => (
         <div key={i}>

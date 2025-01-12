@@ -54,6 +54,8 @@ const UserWorkoutDetail = () => {
 
           const exercisesCollection = collection(workoutDocRef, 'exercises');
           const exercisesSnapshot = await getDocs(exercisesCollection);
+          console.log('exercisesSnapshot', exercisesSnapshot.docs);
+          exercisesSnapshot.docs.sort((a, b) => b.data().orderBy - a.data().orderBy);
           let exercisesData = await Promise.all(
             exercisesSnapshot.docs.map(async (exerciseDoc) => {
               const setsCollection = collection(exerciseDoc.ref, 'sets');
@@ -126,10 +128,16 @@ const UserWorkoutDetail = () => {
                         style={{ width: '50px' }}
                       />
                     </td>
-                    <td style={{ border: '1px solid black', padding: '8px' }}>
-                      <button onClick={() => handleCompleteSet(exerciseIndex, setIndex)}>
-                        {completedSets[`${exerciseIndex}-${setIndex}`] ? 'Undo' : 'Complete'}
-                      </button>
+                    <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center' }}>
+                      <span
+                        onClick={() => handleCompleteSet(exerciseIndex, setIndex)}
+                        style={{
+                          cursor: 'pointer',
+                          color: completedSets[`${exerciseIndex}-${setIndex}`] ? 'green' : 'black',
+                        }}
+                      >
+                        {completedSets[`${exerciseIndex}-${setIndex}`] ? '✔️' : '⬜'}
+                      </span>
                     </td>
                   </tr>
                   {setIndex === exercise.sets.length - 1 && (

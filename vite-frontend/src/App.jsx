@@ -56,7 +56,7 @@ function Workouts() {
   };
 
   return (
-    <div>
+    <div style={{ overflowY: 'auto', maxHeight: '100vh' }}>
       <h1>Workout Tracker</h1>
       
       <div className="workout-list">
@@ -118,7 +118,7 @@ function App() {
             <button onClick={handleLogout}>Logout</button>
             {isAdmin && <Link to="/admin">Admin Dashboard</Link>}
             <Routes>
-              <Route path="/" element={<Workouts />} />
+              <Route path="/" element={<UserWorkouts />} />
               <Route path="/workout/:index" element={<WorkoutDetail />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
