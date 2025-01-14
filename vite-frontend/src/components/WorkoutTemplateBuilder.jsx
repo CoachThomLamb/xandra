@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import ExerciseList from './ExerciseList';
 
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
@@ -86,7 +87,7 @@ const WorkoutTemplateBuilder = () => {
   };
 
   return (
-    <div>
+    <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
       <h1>Workout Template Builder</h1>
       {successMessage && <p>{successMessage}</p>}
       <div>
@@ -133,6 +134,7 @@ const WorkoutTemplateBuilder = () => {
       ))}
       <button onClick={addExercise}>Add Exercise</button>
       <button onClick={saveWorkoutTemplate}>Save Workout Template</button>
+      <ExerciseList />
     </div>
   );
 };
