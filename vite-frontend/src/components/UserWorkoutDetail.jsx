@@ -96,14 +96,6 @@ const UserWorkoutDetail = () => {
       <h2>Exercises</h2>
       <div>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-          <thead>
-            <tr>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Exercise</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
-            </tr>
-          </thead>
           <tbody>
             {(workout.exercises || []).map((exercise, exerciseIndex) => (
               <React.Fragment key={exerciseIndex}>
@@ -112,9 +104,16 @@ const UserWorkoutDetail = () => {
                     {exercise.name}
                   </td>
                 </tr>
+                <tr>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
+                </tr>
                 {exercise.sets.map((set, setIndex) => (
                   <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
                     <tr>
+                      <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
                       <td style={{ border: '1px solid black', padding: '8px' }}>
                         <input
                           type="number"
