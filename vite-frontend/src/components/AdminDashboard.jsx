@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import { db, assignWorkoutTemplateToUser } from '../firebaseConfig';
+import { db } from '../firebaseConfig';
 import withAdminProtection from './withAdminProtection';
 
 const AdminDashboard = () => {
@@ -27,9 +27,37 @@ const AdminDashboard = () => {
     fetchWorkoutTemplates();
   }, []);
 
+  const assignTemplateToUser = async (templateId, userId) => {
+    try {
+      const templateDoc = await getDoc(doc(db, 'workout-templates', templateId));
+      const templateData = templateDoc.data();
+
+      const programmingRef = collection(db, 'users', userId, 'workouts');
+      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title, coachNotes: templateData.coachNotes, completed: false });
+
+      const exercisesCollection = collection(templateDoc.ref, 'exercises');
+      const exercisesSnapshot = await getDocs(exercisesCollection);
+      for (const exerciseDoc of exercisesSnapshot.docs) {
+        const exerciseData = exerciseDoc.data();
+        const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), { name: exerciseData.name, orderBy: exerciseData.orderBy });
+
+        const setsCollection = collection(exerciseDoc.ref, 'sets');
+        const setsSnapshot = await getDocs(setsCollection);
+        for (const setDoc of setsSnapshot.docs) {
+          const setData = setDoc.data();
+          await addDoc(collection(newExerciseRef, 'sets'), setData);
+        }
+      }
+
+      console.log('Workout template assigned to user');
+    } catch (error) {
+      console.error('Error assigning workout template to user:', error);
+    }
+  };
+
   const handleAssignTemplate = async () => {
     if (selectedTemplate && selectedUser) {
-      await assignWorkoutTemplateToUser(selectedTemplate, selectedUser);
+      await assignTemplateToUser(selectedTemplate, selectedUser);
       alert('Workout template assigned successfully');
     } else {
       alert('Please select a user and a workout template');
@@ -69,6 +97,9 @@ const AdminDashboard = () => {
           </li>
         ))}
       </ul>
+      <Link to="/workout-template-builder">
+        <button>Create Workout Template</button>
+      </Link>
     </div>
   );
 };

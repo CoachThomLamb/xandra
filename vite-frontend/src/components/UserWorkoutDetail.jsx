@@ -1,19 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useParams, Link } from 'react-router-dom';
+import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const UserWorkoutDetail = () => {
   const { userId, workoutId } = useParams();
+  
   const [workout, setWorkout] = useState(null);
   const [error, setError] = useState(null);
   const [completedSets, setCompletedSets] = useState({});
+  const [notes, setNotes] = useState({});
 
   const handleCompleteSet = (exerciseIndex, setIndex) => {
     setCompletedSets((prev) => ({
       ...prev,
       [`${exerciseIndex}-${setIndex}`]: !prev[`${exerciseIndex}-${setIndex}`],
     }));
+  };
+
+  const handleInputChange = (exerciseIndex, setIndex, field, value) => {
+    setWorkout((prevWorkout) => {
+      const updatedExercises = [...prevWorkout.exercises];
+      updatedExercises[exerciseIndex].sets[setIndex][field] = value;
+      return { ...prevWorkout, exercises: updatedExercises };
+    });
+  };
+
+  const handleNotesChange = (exerciseIndex, value) => {
+    setNotes((prev) => ({
+      ...prev,
+      [exerciseIndex]: value,
+    }));
+  };
+
+  const completeWorkout = async () => {
+    try {
+      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+      await updateDoc(workoutDocRef, { ...workout, completed: true, notes });
+      alert('Workout completed successfully!');
+    } catch (error) {
+      console.error('Error completing workout:', error);
+      alert('Error completing workout. Please try again later.');
+    }
   };
 
   useEffect(() => {
@@ -60,38 +88,84 @@ const UserWorkoutDetail = () => {
   }
 
   return (
-    <div>
+    <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 200px)', overflowX: 'hidden' }}>
       <h1>{workout.title}</h1>
       <p>Date: {workout.date}</p>
+      <h2>Coach Notes</h2>
+      <p>{workout.coachNotes}</p>
       <h2>Exercises</h2>
-      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead>
-          <tr>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Exercise</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-            <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(workout.exercises || []).map((exercise, exerciseIndex) =>
-            exercise.sets.map((set, setIndex) => (
-              <tr key={`${exerciseIndex}-${setIndex}`}>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{exercise.name}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{set.reps}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>{set.load}</td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>
-                  <button onClick={() => handleCompleteSet(exerciseIndex, setIndex)}>
-                    {completedSets[`${exerciseIndex}-${setIndex}`] ? 'Undo' : 'Complete'}
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div>
+        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+          <thead>
+            <tr>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Exercise</th>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
+              <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(workout.exercises || []).map((exercise, exerciseIndex) => (
+              <React.Fragment key={exerciseIndex}>
+                <tr>
+                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                    {exercise.name}
+                  </td>
+                </tr>
+                {exercise.sets.map((set, setIndex) => (
+                  <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
+                    <tr>
+                      <td style={{ border: '1px solid black', padding: '8px' }}>
+                        <input
+                          type="number"
+                          value={set.reps}
+                          onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
+                          style={{ width: '50px' }}
+                        />
+                      </td>
+                      <td style={{ border: '1px solid black', padding: '8px' }}>
+                        <input
+                          type="number"
+                          value={set.load}
+                          onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
+                          style={{ width: '50px' }}
+                        />
+                      </td>
+                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center' }}>
+                        <span
+                          onClick={() => handleCompleteSet(exerciseIndex, setIndex)}
+                          style={{
+                            cursor: 'pointer',
+                            color: completedSets[`${exerciseIndex}-${setIndex}`] ? 'green' : 'black',
+                          }}
+                        >
+                          {completedSets[`${exerciseIndex}-${setIndex}`] ? '✔️' : '⬜'}
+                        </span>
+                      </td>
+                    </tr>
+                    {setIndex === exercise.sets.length - 1 && (
+                      <tr>
+                        <td colSpan="4" style={{ border: '1px solid black', padding: '8px' }}>
+                          <label>Notes:</label>
+                          <textarea
+                            value={notes[exerciseIndex] || ''}
+                            onChange={(e) => handleNotesChange(exerciseIndex, e.target.value)}
+                            style={{ width: '100%' }}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
+      <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
+        <button>Back to Workouts</button>
+      </Link>
     </div>
   );
 };

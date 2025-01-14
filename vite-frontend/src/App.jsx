@@ -9,6 +9,8 @@ import UserWorkouts from './components/UserWorkouts';
 import UserWorkoutDetail from './components/UserWorkoutDetail';
 import { auth, db, getUserRole } from './firebaseConfig';
 import WorkoutTemplateBuilder from './components/WorkoutTemplateBuilder';
+// import ExerciseTracker from './components/ExerciseTracker';
+ import ExerciseList from './components/ExerciseList';
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
@@ -20,13 +22,21 @@ function Workouts() {
       if (user) {
         const workoutsCollection = collection(db, 'users', user.uid, 'workouts');
         const workoutSnapshot = await getDocs(workoutsCollection);
-        const workoutList = workoutSnapshot.docs.map(doc => doc.data());
+        const workoutList = workoutSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            title: data.title || 'Untitled Workout',
+            exercises: Array.isArray(data.exercises) ? data.exercises : [],
+            date: data.date || new Date().toISOString().split('T')[0],
+          };
+        });
         setWorkouts(workoutList);
       } else {
         const storedWorkouts = JSON.parse(localStorage.getItem('workouts')) || [];
         const parsedWorkouts = storedWorkouts.map(workout => ({
-          ...workout,
-          exercises: Array.isArray(workout.exercises) ? workout.exercises : []
+          title: workout.title || 'Untitled Workout',
+          exercises: Array.isArray(workout.exercises) ? workout.exercises : [],
+          date: workout.date || new Date().toISOString().split('T')[0],
         }));
         setWorkouts(parsedWorkouts);
       }
@@ -48,14 +58,13 @@ function Workouts() {
   };
 
   return (
-    <div>
+    <div style={{ overflowY: 'auto', maxHeight: '100vh' }}>
       <h1>Workout Tracker</h1>
       
       <div className="workout-list">
         {workouts.map((workout, index) => (
           <div key={index} className="workout-item">
             <h2>{workout.title} <small>({workout.date})</small></h2>
-            <p>{workout.exercises.map(ex => ex.name).join(', ')}</p>
             <Link to={`/workout/${index}`}>View Details</Link>
           </div>
         ))}
@@ -111,12 +120,15 @@ function App() {
             <button onClick={handleLogout}>Logout</button>
             {isAdmin && <Link to="/admin">Admin Dashboard</Link>}
             <Routes>
-              <Route path="/" element={<Workouts />} />
+              <Route path="/" element={<UserWorkouts />} />
               <Route path="/workout/:index" element={<WorkoutDetail />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
               <Route path="/user-workouts/:userId/workouts/:workoutId" element={<UserWorkoutDetail />} />
               <Route path="/workout-template-builder" element={<WorkoutTemplateBuilder />} />
+              <Route path="/admin/user/:userId" element={<UserWorkouts />} />
+              {/* <Route path="/exercise-tracker" element={<ExerciseTracker />} /> */}
+              <Route path="/exercise-list" element={<ExerciseList />} />
             </Routes>
           </div>
         ) : (
