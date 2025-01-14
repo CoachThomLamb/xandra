@@ -108,7 +108,7 @@ const UserWorkoutDetail = () => {
                   <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-                  <th style={{ border: '1px solid black', padding: '8px' }}>Completed</th>
+                  <th style={{ border: '1px solid black', padding: '4px', maxWidth: '15px' }}></th>
                 </tr>
                 {exercise.sets.map((set, setIndex) => (
                   <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
@@ -130,7 +130,7 @@ const UserWorkoutDetail = () => {
                           style={{ width: '50px' }}
                         />
                       </td>
-                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center' }}>
+                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', maxWidth: '15px' }}>
                         <span
                           onClick={() => handleCompleteSet(exerciseIndex, setIndex)}
                           style={{
@@ -144,7 +144,7 @@ const UserWorkoutDetail = () => {
                     </tr>
                     {setIndex === exercise.sets.length - 1 && (
                       <tr>
-                        <td colSpan="4" style={{ border: '1px solid black', padding: '8px' }}>
+                        <td colSpan="3" style={{ border: '1px solid black', padding: '8px', maxWidth: '180px' }}>
                           <label>Notes:</label>
                           <textarea
                             value={notes[exerciseIndex] || ''}
