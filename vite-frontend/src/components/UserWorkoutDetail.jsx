@@ -9,16 +9,8 @@ const UserWorkoutDetail = () => {
   const [workout, setWorkout] = useState(null);
   const [clientName, setClientName] = useState('');
   const [error, setError] = useState(null);
-  const [completedSets, setCompletedSets] = useState({});
   const [notes, setNotes] = useState({});
 
-  const handleCompleteSet = (exerciseIndex, setIndex) => {
-    setCompletedSets((prev) => ({
-      ...prev,
-      [`${exerciseIndex}-${setIndex}`]: !prev[`${exerciseIndex}-${setIndex}`],
-    }));
-    saveWorkout();
-  };
 
   const handleInputChange = (exerciseIndex, setIndex, field, value) => {
     setWorkout((prevWorkout) => {
@@ -65,7 +57,8 @@ const UserWorkoutDetail = () => {
             setNumber: set.setNumber,
             reps: set.reps,
             load: set.load,
-            completed: completedSets[`${exerciseIndex}-${setIndex}`] || false,
+            sets: set.sets || 0,
+            completed: set.completed || false,
           });
         }
       }
@@ -104,6 +97,7 @@ const UserWorkoutDetail = () => {
               const setsSnapshot = await getDocs(setsCollection);
               const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() }));
               setsData.sort((a, b) => a.setNumber - b.setNumber); // Order sets by set number
+
               return { id: exerciseDoc.id, ...exerciseDoc.data(), sets: setsData };
             })
           );
@@ -111,6 +105,7 @@ const UserWorkoutDetail = () => {
           exercisesData.sort((a, b) => a.orderBy - b.orderBy); // Order exercises by orderBy field
 
           setWorkout({ ...workoutData, exercises: exercisesData });
+          setNotes(workoutData.notes || {});
         } else {
           setError('Workout not found');
         }
@@ -200,13 +195,13 @@ const UserWorkoutDetail = () => {
                       </td>
                       <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '50px' }}>
                         <span
-                          onClick={() => handleCompleteSet(exerciseIndex, setIndex)}
+                          onClick={() => handleInputChange(exerciseIndex, setIndex, 'completed',!set.completed)}
                           style={{
                             cursor: 'pointer',
-                            color: completedSets[`${exerciseIndex}-${setIndex}`] ? 'green' : 'black',
+                            color: set.completed ? 'green' : 'black',
                           }}
                         >
-                          {completedSets[`${exerciseIndex}-${setIndex}`] ? '✔️' : '⬜'}
+                          {set.completed ? '✔️' : '⬜'}
                         </span>
                       </td>
                     </tr>
