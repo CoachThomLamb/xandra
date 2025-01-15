@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const UserWorkoutDetail = () => {
   const { userId, workoutId } = useParams();
   
   const [workout, setWorkout] = useState(null);
+  const [clientName, setClientName] = useState('');
   const [error, setError] = useState(null);
   const [completedSets, setCompletedSets] = useState({});
   const [notes, setNotes] = useState({});
@@ -16,6 +17,7 @@ const UserWorkoutDetail = () => {
       ...prev,
       [`${exerciseIndex}-${setIndex}`]: !prev[`${exerciseIndex}-${setIndex}`],
     }));
+    saveWorkout();
   };
 
   const handleInputChange = (exerciseIndex, setIndex, field, value) => {
@@ -24,6 +26,7 @@ const UserWorkoutDetail = () => {
       updatedExercises[exerciseIndex].sets[setIndex][field] = value;
       return { ...prevWorkout, exercises: updatedExercises };
     });
+    saveWorkout();
   };
 
   const handleNotesChange = (exerciseIndex, value) => {
@@ -31,12 +34,14 @@ const UserWorkoutDetail = () => {
       ...prev,
       [exerciseIndex]: value,
     }));
+    saveWorkout();
   };
 
   const completeWorkout = async () => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, { ...workout, completed: true, notes });
+      await updateDoc(workoutDocRef, { completed: true, notes });
+      await saveWorkout();
       alert('Workout completed successfully!');
     } catch (error) {
       console.error('Error completing workout:', error);
@@ -44,7 +49,46 @@ const UserWorkoutDetail = () => {
     }
   };
 
+  const saveWorkout = async () => {
+    try {
+      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+      await updateDoc(workoutDocRef, { notes });
+
+      // Save exercises and sets
+      for (const [exerciseIndex, exercise] of workout.exercises.entries()) {
+        const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
+        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy || exerciseIndex });
+
+        for (const [setIndex, set] of exercise.sets.entries()) {
+          const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
+          await setDoc(setDocRef, {
+            setNumber: set.setNumber,
+            reps: set.reps,
+            load: set.load,
+            completed: completedSets[`${exerciseIndex}-${setIndex}`] || false,
+          });
+        }
+      }
+
+      console.log('Workout saved successfully!');
+    } catch (error) {
+      console.error('Error saving workout:', error);
+    }
+  };
+
   useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setClientName(`${userData.firstName} ${userData.lastName}`);
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    };
+
     const fetchWorkout = async () => {
       try {
         const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
@@ -58,9 +102,9 @@ const UserWorkoutDetail = () => {
             exercisesSnapshot.docs.map(async (exerciseDoc) => {
               const setsCollection = collection(exerciseDoc.ref, 'sets');
               const setsSnapshot = await getDocs(setsCollection);
-              const setsData = setsSnapshot.docs.map((setDoc) => setDoc.data());
+              const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() }));
               setsData.sort((a, b) => a.setNumber - b.setNumber); // Order sets by set number
-              return { ...exerciseDoc.data(), sets: setsData };
+              return { id: exerciseDoc.id, ...exerciseDoc.data(), sets: setsData };
             })
           );
 
@@ -76,8 +120,23 @@ const UserWorkoutDetail = () => {
       }
     };
 
+    fetchUserDetails();
     fetchWorkout();
   }, [userId, workoutId]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        saveWorkout();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [workout, notes]);
 
   if (error) {
     return <div>{error}</div>;
@@ -89,7 +148,7 @@ const UserWorkoutDetail = () => {
 
   return (
     <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 200px)', overflowX: 'hidden' }}>
-      <h1>{workout.title}</h1>
+      <h1>{clientName}'s Workout</h1>
       <p>Date: {workout.date}</p>
       <h2>Coach Notes</h2>
       <p>{workout.coachNotes}</p>
@@ -100,7 +159,7 @@ const UserWorkoutDetail = () => {
             {(workout.exercises || []).map((exercise, exerciseIndex) => (
               <React.Fragment key={exerciseIndex}>
                 <tr>
-                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                  <td colSpan="5" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
                     {exercise.name}
                   </td>
                 </tr>
@@ -108,7 +167,8 @@ const UserWorkoutDetail = () => {
                   <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-                  <th style={{ border: '1px solid black', padding: '4px', maxWidth: '15px' }}></th>
+                  <th style={{ border: '1px solid black', padding: '8px' }}>Sets</th>
+                  <th style={{ border: '1px solid black', padding: '4px', width: '50px' }}>Completed</th>
                 </tr>
                 {exercise.sets.map((set, setIndex) => (
                   <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
@@ -117,7 +177,7 @@ const UserWorkoutDetail = () => {
                       <td style={{ border: '1px solid black', padding: '8px' }}>
                         <input
                           type="number"
-                          value={set.reps}
+                          value={set.reps || ''}
                           onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
                           style={{ width: '50px' }}
                         />
@@ -125,12 +185,20 @@ const UserWorkoutDetail = () => {
                       <td style={{ border: '1px solid black', padding: '8px' }}>
                         <input
                           type="number"
-                          value={set.load}
+                          value={set.load || ''}
                           onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
                           style={{ width: '50px' }}
                         />
                       </td>
-                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', maxWidth: '15px' }}>
+                      <td style={{ border: '1px solid black', padding: '8px' }}>
+                        <input
+                          type="number"
+                          value={set.sets || ''}
+                          onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'sets', e.target.value)}
+                          style={{ width: '50px' }}
+                        />
+                      </td>
+                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '50px' }}>
                         <span
                           onClick={() => handleCompleteSet(exerciseIndex, setIndex)}
                           style={{
@@ -144,7 +212,7 @@ const UserWorkoutDetail = () => {
                     </tr>
                     {setIndex === exercise.sets.length - 1 && (
                       <tr>
-                        <td colSpan="3" style={{ border: '1px solid black', padding: '8px', maxWidth: '180px' }}>
+                        <td colSpan="5" style={{ border: '1px solid black', padding: '8px' }}>
                           <label>Notes:</label>
                           <textarea
                             value={notes[exerciseIndex] || ''}
