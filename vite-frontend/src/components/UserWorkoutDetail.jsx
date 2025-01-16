@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const UserWorkoutDetail = () => {
   const { userId, workoutId } = useParams();
@@ -10,7 +11,8 @@ const UserWorkoutDetail = () => {
   const [clientName, setClientName] = useState('');
   const [error, setError] = useState(null);
   const [notes, setNotes] = useState({});
-
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoURL, setVideoURL] = useState('');
 
   const handleInputChange = (exerciseIndex, setIndex, field, value) => {
     setWorkout((prevWorkout) => {
@@ -27,6 +29,20 @@ const UserWorkoutDetail = () => {
       [exerciseIndex]: value,
     }));
     saveWorkout();
+  };
+
+  const handleVideoUpload = async () => {
+    if (!videoFile) return;
+
+    const storage = getStorage();
+    const storageRef = ref(storage, `videos/${userId}/${workoutId}/${videoFile.name}`);
+    await uploadBytes(storageRef, videoFile);
+    const url = await getDownloadURL(storageRef);
+    setVideoURL(url);
+
+    const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+    await updateDoc(workoutDocRef, { videoURL: url });
+    console.log('Video uploaded and URL saved to Firestore');
   };
 
   const completeWorkout = async () => {
@@ -106,6 +122,7 @@ const UserWorkoutDetail = () => {
 
           setWorkout({ ...workoutData, exercises: exercisesData });
           setNotes(workoutData.notes || {});
+          setVideoURL(workoutData.videoURL || '');
         } else {
           setError('Workout not found');
         }
@@ -223,6 +240,17 @@ const UserWorkoutDetail = () => {
             ))}
           </tbody>
         </table>
+      </div>
+      <div>
+        <h2>Upload Workout Video</h2>
+        <input type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files[0])} />
+        <button onClick={handleVideoUpload}>Upload Video</button>
+        {videoURL && (
+          <div>
+            <h3>Uploaded Video</h3>
+            <video src={videoURL} controls width="100%" />
+          </div>
+        )}
       </div>
       <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
