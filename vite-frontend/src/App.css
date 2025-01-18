@@ -72,8 +72,8 @@ select {
   flex-direction: column;
   gap: 1em;
   max-width: 100%;
-  overflow-x: hidden;
-  height: calc(100vh - 100px); /* Added specific height */
+  overflow-x: hidden; 
+  height: calc(100vh - 10px); /* Added specific height */
   overflow-y: auto; /* Added */
   padding-bottom: 20px;
   -webkit-overflow-scrolling: touch; /* Added for smooth iOS scrolling */
@@ -107,7 +107,7 @@ select {
 }
 
 .exercise-notes {
-  width: 100%;
+  width: 90%;
   box-sizing: border-box;
 }
 
@@ -139,7 +139,7 @@ select {
   }
 
   .exercise-container {
-    height: calc(100vh - 80px);
+    
     overflow-y: auto;
     padding: 10px;
     -webkit-overflow-scrolling: touch;

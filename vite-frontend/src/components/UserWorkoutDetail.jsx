@@ -159,7 +159,7 @@ const UserWorkoutDetail = () => {
   }
 
   return (
-    <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 200px)', overflowX: 'hidden' }}>
+    <div style={{ overflowY: 'auto', overflowX: 'hidden', maxHeight: '100vh', maxWidth: '100vw', padding: '10px', boxSizing: 'border-box' }}>
       <h1>{clientName}'s Workout</h1>
       <p>Date: {workout.date}</p>
       <h2>Coach Notes</h2>
@@ -180,7 +180,7 @@ const UserWorkoutDetail = () => {
                   <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Sets</th>
-                  <th style={{ border: '1px solid black', padding: '4px', width: '50px' }}>Completed</th>
+                  <th style={{ border: '1px solid black', padding: '4px' }}></th>
                 </tr>
                 {exercise.sets.map((set, setIndex) => (
                   <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
@@ -210,7 +210,7 @@ const UserWorkoutDetail = () => {
                           style={{ width: '50px' }}
                         />
                       </td>
-                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '50px' }}>
+                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '25px' }}>
                         <span
                           onClick={() => handleInputChange(exerciseIndex, setIndex, 'completed',!set.completed)}
                           style={{
@@ -229,7 +229,7 @@ const UserWorkoutDetail = () => {
                           <textarea
                             value={notes[exerciseIndex] || ''}
                             onChange={(e) => handleNotesChange(exerciseIndex, e.target.value)}
-                            style={{ width: '100%' }}
+                            style={{ width: '95%' }}
                           />
                         </td>
                       </tr>
