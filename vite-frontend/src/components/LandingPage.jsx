@@ -2,9 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 // import './LandingPage.css'; // Create this file for styling
 
-const LandingPage = () => {
-    console.log('LandingPage.jsx');
-  return (
+const LandingPage = () => (
     <div>
       <h1>Wilo.ai</h1>
       <p>Trainers create workouts.</p>
@@ -15,6 +13,6 @@ const LandingPage = () => {
       
     </div>
   );
-};
+
 
 export default LandingPage;

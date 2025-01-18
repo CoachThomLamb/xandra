@@ -133,11 +133,14 @@ function App() {
             </Routes>
           </div>
         ) : (
+          <div>
+            <button onClick={handleLogin}>Login with Google</button>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/landing" element={<LandingPage />} />
             
           </Routes>
+          </div>
         )}
       </div>
     </Router>
