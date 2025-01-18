@@ -11,6 +11,7 @@ import { auth, db, getUserRole } from './firebaseConfig';
 import WorkoutTemplateBuilder from './components/WorkoutTemplateBuilder';
 // import ExerciseTracker from './components/ExerciseTracker';
  import ExerciseList from './components/ExerciseList';
+import LandingPage from './components/LandingPage';
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
@@ -134,6 +135,11 @@ function App() {
         ) : (
           <div>
             <button onClick={handleLogin}>Login with Google</button>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/landing" element={<LandingPage />} />
+            
+          </Routes>
           </div>
         )}
       </div>
