@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 
 const UserWorkouts = () => {
@@ -8,6 +8,7 @@ const UserWorkouts = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(paramUserId || auth.currentUser?.uid);
   const [workouts, setWorkouts] = useState([]);
+  const [clientName, setClientName] = useState('');
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -17,6 +18,18 @@ const UserWorkouts = () => {
   }, [paramUserId]);
 
   useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setClientName(`${userData.firstName} ${userData.lastName}`);
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    };
+
     const fetchWorkouts = async () => {
       try {
         const workoutsCollection = collection(db, 'users', userId, 'workouts');
@@ -33,6 +46,7 @@ const UserWorkouts = () => {
     };
 
     if (userId) {
+      fetchUserDetails();
       fetchWorkouts();
     }
   }, [userId]);
@@ -42,8 +56,10 @@ const UserWorkouts = () => {
 
   return (
     <div>
-      <h1>User Workouts</h1>
+      <h1>{clientName}'s Workouts</h1>
       {error && <p>{error}</p>}
+
+      <Link to={`/user-nutrition/${userId}`}>Go to Nutrition</Link>
 
       <h2>Current Workouts</h2>
       <ul>
