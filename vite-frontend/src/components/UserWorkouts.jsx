@@ -59,7 +59,7 @@ const UserWorkouts = () => {
       <h1>{clientName}'s Workouts</h1>
       {error && <p>{error}</p>}
 
-      <Link to={`/user-nutrition/${userId}`}>Go to Nutrition</Link>
+      <Link to={`/user-food/${userId}`}>Go to Food</Link>
 
       <h2>Current Workouts</h2>
       <ul>
