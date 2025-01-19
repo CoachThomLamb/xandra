@@ -49,28 +49,26 @@ const UserFood = () => {
         <table className="food-table">
           <thead>
             <tr>
-              <td><input type="text" placeholder="Food Item" value={foodItem} onChange={(e) => setFoodItem(e.target.value)} /></td>
+              <td colSpan="4"><input type="text" placeholder="Food Item" value={foodItem} onChange={(e) => setFoodItem(e.target.value)} /></td>
             </tr>
             <tr>
-              <th>Serving Size (g)</th>
-              <th>Protein (g)</th>
-              <th>Carbs (g)</th>
-              <th>Calories</th>
-              <th>Fat (g)</th>
+              <th>Size (g)</th>
+              <th>Pro(g)</th>
+              <th>Carb(g)</th>
+              <th>Cals</th>
+              <th>Fat(g)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><input type="text" placeholder="Serving Size (g)" value={servingSize} onChange={(e) => setServingSize(e.target.value)} /></td>
-              <td><input type="text" placeholder="Protein (g)" value={protein} onChange={(e) => setProtein(e.target.value)} /></td>
-              <td><input type="text" placeholder="Carbs (g)" value={carbs} onChange={(e) => setCarbs(e.target.value)} /></td>
-            
-            
-              <td><input type="text" placeholder="Calories" value={calories} onChange={(e) => setCalories(e.target.value)} /></td>
-              <td><input type="text" placeholder="Fat (g)" value={fat} onChange={(e) => setFat(e.target.value)} /></td>
+              <td><input type="number" placeholder="Serving Size (g)" value={servingSize} onChange={(e) => setServingSize(e.target.value)} /></td>
+              <td><input type="number" placeholder="Protein (g)" value={protein} onChange={(e) => setProtein(e.target.value)} /></td>
+              <td><input type="number" placeholder="Carbs (g)" value={carbs} onChange={(e) => setCarbs(e.target.value)} /></td>
+              <td><input type="number" placeholder="Fat (g)" value={fat} onChange={(e) => setFat(e.target.value)} /></td>
+              <td><input type="number" placeholder="Calories" value={calories} onChange={(e) => setCalories(e.target.value)} /></td>
             </tr>
             <tr>
-              <td><button onClick={addFoodItem}>Add Food Item</button></td>
+              <td colSpan="4" ><button onClick={addFoodItem}>Add Food Item</button></td>
             </tr>
           </tbody>
         </table>
