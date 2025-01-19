@@ -10,8 +10,9 @@ import UserWorkoutDetail from './components/UserWorkoutDetail';
 import { auth, db, getUserRole } from './firebaseConfig';
 import WorkoutTemplateBuilder from './components/WorkoutTemplateBuilder';
 // import ExerciseTracker from './components/ExerciseTracker';
- import ExerciseList from './components/ExerciseList';
+import ExerciseList from './components/ExerciseList';
 import LandingPage from './components/LandingPage';
+import UserNutrition from './components/UserNutrition'; // Import the UserNutrition component
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
@@ -130,6 +131,7 @@ function App() {
               <Route path="/admin/user/:userId" element={<UserWorkouts />} />
               {/* <Route path="/exercise-tracker" element={<ExerciseTracker />} /> */}
               <Route path="/exercise-list" element={<ExerciseList />} />
+              <Route path="/user-nutrition/:userId" element={<UserNutrition/>} /> {/* Add the new route */}
             </Routes>
           </div>
         ) : (
