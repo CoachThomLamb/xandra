@@ -1,0 +1,43 @@
+.container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 5px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid black;
+  }
+  
+  table {
+    width: 100%;
+    max-width: calc(100% - 20px);
+    border: 1px solid black;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-bottom: 20px;
+  }
+  
+  th, td {
+    padding: 8px;
+    border: 1px solid black;
+    text-align: center;
+  }
+  
+  input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #555;
+  }
