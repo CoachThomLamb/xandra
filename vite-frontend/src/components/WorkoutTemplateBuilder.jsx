@@ -87,7 +87,7 @@ const WorkoutTemplateBuilder = () => {
   };
 
   return (
-    <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
+    <div style={{ overflowY: 'scroll', overflowX: 'hidden', maxHeight: 'calc(100vh - 200px)', width: '100%' }}>
       <h1>Workout Template Builder</h1>
       {successMessage && <p>{successMessage}</p>}
       <div>
@@ -96,7 +96,7 @@ const WorkoutTemplateBuilder = () => {
       </div>
       <div>
         <label>Coach Notes:</label>
-        <textarea value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} style={{ width: '100%' }} />
+        <textarea value={coachNotes} onChange={(e) => setCoachNotes(e.target.value)} style={{ width: '95%',  }} />
       </div>
       {exercises.map((exercise, i) => (
         <div key={i}>
