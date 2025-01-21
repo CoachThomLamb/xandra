@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -15,12 +15,13 @@ const UserWorkoutDetail = () => {
   const [videoURL, setVideoURL] = useState('');
 
   const handleInputChange = (exerciseIndex, setIndex, field, value) => {
+    console.log('handleInputChange called:', { exerciseIndex, setIndex, field, value });
     setWorkout((prevWorkout) => {
       const updatedExercises = [...prevWorkout.exercises];
       updatedExercises[exerciseIndex].sets[setIndex][field] = value;
       return { ...prevWorkout, exercises: updatedExercises };
     });
-    saveWorkout();
+    console.log('State updated after handleInputChange');
   };
 
   const handleNotesChange = (exerciseIndex, value) => {
@@ -28,7 +29,6 @@ const UserWorkoutDetail = () => {
       ...prev,
       [exerciseIndex]: value,
     }));
-    saveWorkout();
   };
 
   const handleVideoUpload = async () => {
@@ -82,6 +82,24 @@ const UserWorkoutDetail = () => {
       console.log('Workout saved successfully!');
     } catch (error) {
       console.error('Error saving workout:', error);
+    }
+  };
+
+  const handleDeleteSet = async (exerciseIndex, setIndex) => {
+    console.log('handleDeleteSet called:', { exerciseIndex, setIndex });
+    const setId = workout.exercises[exerciseIndex].sets[setIndex].id;
+    const exerciseId = workout.exercises[exerciseIndex].id;
+    try {
+      // Remove set from Firestore
+      await deleteDoc(
+        doc(db, 'users', userId, 'workouts', workoutId, 'exercises', exerciseId, 'sets', setId)
+      );
+      console.log('Set deleted from backend:', setId);
+
+      // Reload entire workout
+      await fetchWorkout();
+    } catch (error) {
+      console.error('Error deleting set:', error);
     }
   };
 
@@ -150,6 +168,7 @@ const UserWorkoutDetail = () => {
     };
   }, [workout, notes]);
 
+  
   if (error) {
     return <div>{error}</div>;
   }
@@ -220,6 +239,7 @@ const UserWorkoutDetail = () => {
                         >
                           {set.completed ? '✔️' : '⬜'}
                         </span>
+                        <button className="delete-set-button" onClick={() => handleDeleteSet(exerciseIndex, setIndex)}>Delete Set</button>
                       </td>
                     </tr>
                     {setIndex === exercise.sets.length - 1 && (
