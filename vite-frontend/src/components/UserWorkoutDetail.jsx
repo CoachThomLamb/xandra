@@ -159,7 +159,7 @@ const UserWorkoutDetail = () => {
   }
 
   return (
-    <div style={{ overflowY: 'auto', overflowX: 'hidden', maxHeight: '100vh', maxWidth: '100vw', padding: '10px', boxSizing: 'border-box' }}>
+    <div style={{ overflowY: 'auto', overflowX: 'hidden', maxHeight: '100vh', maxWidth: '100vw', padding: '10px', boxSizing: 'border-box' , paddingBottom: '180px'}}>
       <h1>{clientName}'s Workout</h1>
       <p>Date: {workout.date}</p>
       <h2>Coach Notes</h2>
