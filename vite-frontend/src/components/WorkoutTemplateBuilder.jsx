@@ -9,10 +9,11 @@ import './WorkoutTemplateBuilder.css';
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
   const [coachNotes, setCoachNotes] = useState('');
-  const [exercises, setExercises] = useState([{ name: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: 0 }]);
+  const [exercises, setExercises] = useState([{ name: '', id: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: 0 }]);
   const [templates, setTemplates] = useState([]);
   const [exerciseNames, setExerciseNames] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [exerciseMap, setExerciseMap] = useState({});
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -26,27 +27,38 @@ const WorkoutTemplateBuilder = () => {
     };
 
     fetchTemplates();
+    fetchExerciseNames();
   }, []);
 
   const fetchExerciseNames = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'exercises'));
-      const names = querySnapshot.docs.map(doc => doc.data().name);
+      const names = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
       setExerciseNames(names);
+      const map = {};
+      names.forEach(exercise => {
+        map[exercise.name] = exercise.id;
+      });
+      setExerciseMap(map);
     } catch (error) {
       console.error('Error fetching exercise names:', error);
     }
   };
 
   const addExercise = () => {
-    setExercises([...exercises, { name: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: exercises.length }]);
+    setExercises([...exercises, { name: '', id: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: exercises.length }]);
   };
 
   const updateExercise = (index, field, value) => {
-    const updatedExercises = exercises.map((exercise, i) =>
-      i === index ? { ...exercise, [field]: value } : exercise
-    );
-    setExercises(updatedExercises);
+    setExercises((prevExercises) => {
+      const updatedExercises = [...prevExercises];
+      updatedExercises[index] = {
+        ...updatedExercises[index],
+        [field]: value,
+        id: field === 'name' ? exerciseMap[value] : updatedExercises[index].id,
+      };
+      return updatedExercises;
+    });
   };
 
   const addSet = (exerciseIndex) => {
@@ -76,7 +88,7 @@ const WorkoutTemplateBuilder = () => {
     try {
       const workoutTemplateRef = await addDoc(collection(db, 'workout-templates'), { title, coachNotes });
       for (const exercise of exercises) {
-        const exerciseRef = await addDoc(collection(workoutTemplateRef, 'exercises'), { name: exercise.name, orderBy: exercise.orderBy });
+        const exerciseRef = await addDoc(collection(workoutTemplateRef, 'exercises'), { name: exercise.name, id: exercise.id, orderBy: exercise.orderBy });
         for (const set of exercise.sets) {
           await addDoc(collection(exerciseRef, 'sets'), set);
         }
@@ -112,8 +124,8 @@ const WorkoutTemplateBuilder = () => {
             onFocus={() => fetchExerciseNames()}
           />
           <datalist id={`exercise-names-${i}`}>
-            {exerciseNames.map((name, index) => (
-              <option key={index} value={name} />
+            {exerciseNames.map((exercise, index) => (
+              <option key={index} value={exercise.name} />
             ))}
           </datalist>
           {exercise.name} - {exercise.videoURL && (

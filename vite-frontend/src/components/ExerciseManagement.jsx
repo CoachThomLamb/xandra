@@ -7,6 +7,7 @@ const ExerciseManagement = () => {
   const [exercises, setExercises] = useState([]);
   const [newExercise, setNewExercise] = useState({ name: '', videoURL: '' });
   const [videoFile, setVideoFile] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchExercises();
@@ -46,8 +47,12 @@ const ExerciseManagement = () => {
     fetchExercises();
   };
 
+  const filteredExercises = exercises.filter((ex) =>
+    ex.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div>
+    <div className="exercise-container">
       <h2>Exercise Management</h2>
       <div>
         <input
@@ -63,12 +68,18 @@ const ExerciseManagement = () => {
         />
         <button onClick={createExercise}>Create Exercise</button>
       </div>
-      <ul>
-        {exercises.map((ex) => (
-          <li key={ex.id}>
-            <span>{ex.name}</span>
+      <input
+        type="text"
+        placeholder="Search exercises..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <ul style={{}}>
+        {filteredExercises.map((ex) => (
+          <li key={ex.id} className="exercise-row-group">
+            <span className="exercise-row">{ex.name}</span>
             {ex.videoURL && <a href={ex.videoURL} target="_blank" rel="noreferrer">View Video</a>}
-            <button onClick={() => deleteExercise(ex.id)}>Delete</button>
+            <button onClick={() => deleteExercise(ex.id)} className='exercise-row'>Delete</button>
             {/* For update, you could use a form or inline editing */}
           </li>
         ))}
