@@ -13,6 +13,7 @@ import WorkoutTemplateBuilder from './components/WorkoutTemplateBuilder';
 import ExerciseList from './components/ExerciseList';
 import LandingPage from './components/LandingPage';
 import UserFood from './components/UserFood'; // Import the UserFood component
+import ExerciseManagement from './components/ExerciseManagement';
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
@@ -132,6 +133,7 @@ function App() {
               {/* <Route path="/exercise-tracker" element={<ExerciseTracker />} /> */}
               <Route path="/exercise-list" element={<ExerciseList />} />
               <Route path="/user-food/:userId" element={<UserFood />} /> {/* Add the new route */}
+              <Route path="/exercise-management" element={<ExerciseManagement />} />
             </Routes>
           </div>
         ) : (

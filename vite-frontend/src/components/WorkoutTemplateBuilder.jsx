@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ExerciseList from './ExerciseList';
+import { Link } from 'react-router-dom';
 
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
@@ -113,6 +114,9 @@ const WorkoutTemplateBuilder = () => {
               <option key={index} value={name} />
             ))}
           </datalist>
+          {exercise.name} - {exercise.videoURL && (
+            <a href={exercise.videoURL} target="_blank" rel="noreferrer">Preview</a>
+          )}
           {exercise.sets.map((set, j) => (
             <div key={j}>
               <label>Set {set.setNumber} Reps:</label>
@@ -134,6 +138,9 @@ const WorkoutTemplateBuilder = () => {
       ))}
       <button onClick={addExercise}>Add Exercise</button>
       <button onClick={saveWorkoutTemplate}>Save Workout Template</button>
+      <Link to="/exercise-management" style={{ margin: '10px' }}>
+        <button>Manage Exercises</button>
+      </Link>
       <ExerciseList />
     </div>
   );
