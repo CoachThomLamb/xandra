@@ -3,6 +3,8 @@ import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ExerciseList from './ExerciseList';
 import { Link } from 'react-router-dom';
+import './WorkoutTemplateBuilder.css';
+
 
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
