@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ExerciseList from './ExerciseList';
 import { Link } from 'react-router-dom';
@@ -14,6 +14,7 @@ const WorkoutTemplateBuilder = () => {
   const [exerciseNames, setExerciseNames] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [exerciseMap, setExerciseMap] = useState({});
+  const [filteredNames, setFilteredNames] = useState([]);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -30,35 +31,59 @@ const WorkoutTemplateBuilder = () => {
     fetchExerciseNames();
   }, []);
 
+  useEffect(() => {
+    setFilteredNames(exerciseNames);
+  }, [exerciseNames]);
+
   const fetchExerciseNames = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'exercises'));
-      const names = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-      setExerciseNames(names);
-      const map = {};
-      names.forEach(exercise => {
-        map[exercise.name] = exercise.id;
-      });
-      setExerciseMap(map);
-    } catch (error) {
-      console.error('Error fetching exercise names:', error);
-    }
+    const exerciseCollection = collection(db, 'exercises');
+    const exerciseSnapshot = await getDocs(exerciseCollection);
+    const names = exerciseSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+    setExerciseNames(names);
+    const map = {};
+    names.forEach(exercise => {
+      map[exercise.name] = exercise.id;
+    });
+    setExerciseMap(map);
   };
 
   const addExercise = () => {
     setExercises([...exercises, { name: '', id: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: exercises.length }]);
   };
 
-  const updateExercise = (index, field, value) => {
-    setExercises((prevExercises) => {
-      const updatedExercises = [...prevExercises];
-      updatedExercises[index] = {
-        ...updatedExercises[index],
-        [field]: value,
-        id: field === 'name' ? exerciseMap[value] : updatedExercises[index].id,
-      };
-      return updatedExercises;
-    });
+  const updateExercise = async (index, field, value) => {
+    const updatedExercises = [...exercises];
+    updatedExercises[index][field] = value;
+
+    if (field === 'id') {
+      const exerciseDoc = await getDoc(doc(db, 'exercises', value));
+      if (exerciseDoc.exists()) {
+        updatedExercises[index].name = exerciseDoc.data().name;
+        updatedExercises[index].videoURL = exerciseDoc.data().videoURL;
+      }
+    }
+
+    setExercises(updatedExercises);
+  };
+
+  const handleExerciseNameInput = (index, typed) => {
+    const updated = [...exercises];
+    updated[index].name = typed;
+    updated[index].id = ''; // Clear ID, will set later
+    const found = filteredNames.find(
+      (ex) => ex.name.toLowerCase() === typed.toLowerCase()
+    );
+    updated[index].id = found ? found.id : '';
+    setExercises(updated);
+
+    const filtered = exerciseNames.filter((ex) =>
+      ex.name.toLowerCase().includes(typed.toLowerCase())
+    );
+    setFilteredNames(filtered);
+  };
+
+  const handleExerciseSelect = async (index, selectedId) => {
+    await updateExercise(index, 'id', selectedId);
   };
 
   const addSet = (exerciseIndex) => {
@@ -120,12 +145,11 @@ const WorkoutTemplateBuilder = () => {
             type="text"
             list={`exercise-names-${i}`}
             value={exercise.name}
-            onChange={(e) => updateExercise(i, 'name', e.target.value)}
-            onFocus={() => fetchExerciseNames()}
+            onChange={(e) => handleExerciseNameInput(i, e.target.value)}
           />
           <datalist id={`exercise-names-${i}`}>
-            {exerciseNames.map((exercise, index) => (
-              <option key={index} value={exercise.name} />
+            {filteredNames.map((item, idx) => (
+              <option key={idx} value={item.name} />
             ))}
           </datalist>
           {exercise.name} - {exercise.videoURL && (

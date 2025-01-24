@@ -39,7 +39,7 @@ const AdminDashboard = () => {
       const exercisesSnapshot = await getDocs(exercisesCollection);
       for (const exerciseDoc of exercisesSnapshot.docs) {
         const exerciseData = exerciseDoc.data();
-        const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), { name: exerciseData.name, orderBy: exerciseData.orderBy });
+        const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), { name: exerciseData.name, orderBy: exerciseData.orderBy, exerciseId: exerciseData.id });
 
         const setsCollection = collection(exerciseDoc.ref, 'sets');
         const setsSnapshot = await getDocs(setsCollection);

@@ -113,8 +113,12 @@ const UserWorkoutDetail = () => {
               const setsSnapshot = await getDocs(setsCollection);
               const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() }));
               setsData.sort((a, b) => a.setNumber - b.setNumber); // Order sets by set number
-
-              return { id: exerciseDoc.id, ...exerciseDoc.data(), sets: setsData };
+              console.log("exercise", exerciseDoc.id);
+              const exerciseData = exerciseDoc.data();
+              const name = exerciseData.name || '';
+              const videoURL = exerciseData.videoURL || '';
+              console.log("exerciseData", exerciseData);
+              return { id: exerciseDoc.id, name, videoURL, sets: setsData };
             })
           );
 
@@ -173,6 +177,16 @@ const UserWorkoutDetail = () => {
                 <tr>
                   <td colSpan="5" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
                     {exercise.name}
+                    {exercise.videoURL != null && exercise.videoURL.trim() !== '' && (
+                      <a
+                        href={exercise.videoURL}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ marginLeft: '10px' }}
+                      >
+                        View Video
+                      </a>
+                    )}
                   </td>
                 </tr>
                 <tr>
