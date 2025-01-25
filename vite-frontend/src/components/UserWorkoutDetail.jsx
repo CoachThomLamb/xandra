@@ -84,6 +84,22 @@ const UserWorkoutDetail = () => {
       console.error('Error saving workout:', error);
     }
   };
+  const getExerciseVideoURL = async (exerciseId) => {
+    try {
+      const exerciseDoc = await getDoc(doc(db, 'exercises', exerciseId));
+      if (exerciseDoc.exists()) {
+        return exerciseDoc.data().videoURL || '';
+      } else {
+        console.error('Exercise not found');
+        return '';
+      }
+    } catch (error) {
+      console.error('Error fetching exercise video URL:', error);
+      return '';
+    }
+  };
+  
+
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -116,13 +132,17 @@ const UserWorkoutDetail = () => {
               console.log("exercise", exerciseDoc.id);
               const exerciseData = exerciseDoc.data();
               const name = exerciseData.name || '';
-              const videoURL = exerciseData.videoURL || '';
+              const orderBy = exerciseData.orderBy;
               console.log("exerciseData", exerciseData);
-              return { id: exerciseDoc.id, name, videoURL, sets: setsData };
+              const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
+              return { id: exerciseDoc.id, name, videoURL, orderBy,  sets: setsData };
             })
           );
 
-          exercisesData.sort((a, b) => a.orderBy - b.orderBy); // Order exercises by orderBy field
+          exercisesData.sort((a, b) => {
+            return a.orderBy - b.orderBy;
+          })
+
 
           setWorkout({ ...workoutData, exercises: exercisesData });
           setNotes(workoutData.notes || {});

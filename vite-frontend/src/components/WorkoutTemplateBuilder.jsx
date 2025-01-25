@@ -9,7 +9,7 @@ import './WorkoutTemplateBuilder.css';
 const WorkoutTemplateBuilder = () => {
   const [title, setTitle] = useState('');
   const [coachNotes, setCoachNotes] = useState('');
-  const [exercises, setExercises] = useState([{ name: '', id: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: 0 }]);
+  const [exercises, setExercises] = useState([{ name: '', id: '', videoURL: '', sets: [{ setNumber: 1, reps: '', load: '' }], orderBy: 0 }]);
   const [templates, setTemplates] = useState([]);
   const [exerciseNames, setExerciseNames] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
@@ -54,7 +54,7 @@ const WorkoutTemplateBuilder = () => {
   const updateExercise = async (index, field, value) => {
     const updatedExercises = [...exercises];
     updatedExercises[index][field] = value;
-
+    console.log('Updated exercises:', updatedExercises);
     if (field === 'id') {
       const exerciseDoc = await getDoc(doc(db, 'exercises', value));
       if (exerciseDoc.exists()) {
@@ -67,6 +67,7 @@ const WorkoutTemplateBuilder = () => {
   };
 
   const handleExerciseNameInput = (index, typed) => {
+   
     const updated = [...exercises];
     updated[index].name = typed;
     updated[index].id = ''; // Clear ID, will set later
@@ -152,9 +153,7 @@ const WorkoutTemplateBuilder = () => {
               <option key={idx} value={item.name} />
             ))}
           </datalist>
-          {exercise.name} - {exercise.videoURL && (
-            <a href={exercise.videoURL} target="_blank" rel="noreferrer">Preview</a>
-          )}
+          {exercise.name}
           {exercise.sets.map((set, j) => (
             <div key={j}>
               <label>Set {set.setNumber} Reps:</label>
