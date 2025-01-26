@@ -39,7 +39,16 @@ const AdminDashboard = () => {
       const exercisesSnapshot = await getDocs(exercisesCollection);
       for (const exerciseDoc of exercisesSnapshot.docs) {
         const exerciseData = exerciseDoc.data();
-        const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), { name: exerciseData.name, orderBy: exerciseData.orderBy });
+        if (exerciseData.id === undefined) {
+          throw new Error('Invalid exercise data: exerciseId is undefined');
+        }
+        const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), {
+          name: exerciseData.name,
+          orderBy: exerciseData.orderBy, // Ensure orderBy is copied correctly
+          exerciseId: exerciseData.id, 
+          videoURL: exerciseData.videoURL || '',
+        });
+        // console.log('Copied orderBy:', newExerciseRef.data().orderBy);
 
         const setsCollection = collection(exerciseDoc.ref, 'sets');
         const setsSnapshot = await getDocs(setsCollection);
@@ -52,6 +61,7 @@ const AdminDashboard = () => {
       console.log('Workout template assigned to user');
     } catch (error) {
       console.error('Error assigning workout template to user:', error);
+      alert(`Error assigning workout template to user: ${error.message}`);
     }
   };
 

@@ -65,7 +65,7 @@ const UserWorkoutDetail = () => {
       // Save exercises and sets
       for (const [exerciseIndex, exercise] of workout.exercises.entries()) {
         const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
-        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy || exerciseIndex });
+        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId });
 
         for (const [setIndex, set] of exercise.sets.entries()) {
           const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
@@ -84,6 +84,23 @@ const UserWorkoutDetail = () => {
       console.error('Error saving workout:', error);
     }
   };
+  const getExerciseVideoURL = async (exerciseId) => {
+    console.log("exerciseId", exerciseId);
+    try {
+      const exerciseDoc = await getDoc(doc(db, 'exercises', exerciseId));
+      if (exerciseDoc.exists()) {
+        return exerciseDoc.data().videoURL || '';
+      } else {
+        console.error('Exercise not found');
+        return '';
+      }
+    } catch (error) {
+      console.error('Error fetching exercise video URL:', error);
+      return '';
+    }
+  };
+  
+
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -113,12 +130,20 @@ const UserWorkoutDetail = () => {
               const setsSnapshot = await getDocs(setsCollection);
               const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() }));
               setsData.sort((a, b) => a.setNumber - b.setNumber); // Order sets by set number
-
-              return { id: exerciseDoc.id, ...exerciseDoc.data(), sets: setsData };
+              const exerciseData = exerciseDoc.data();
+              const name = exerciseData.name || '';
+              const orderBy = exerciseData.orderBy;
+              console.log("exerciseData", exerciseData);
+              const exerciseId = exerciseData.exerciseId;
+              const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
+              return { id: exerciseDoc.id, name, videoURL, exerciseId,  orderBy,  sets: setsData };
             })
           );
 
-          exercisesData.sort((a, b) => a.orderBy - b.orderBy); // Order exercises by orderBy field
+          exercisesData.sort((a, b) => {
+            return a.orderBy - b.orderBy;
+          })
+
 
           setWorkout({ ...workoutData, exercises: exercisesData });
           setNotes(workoutData.notes || {});
@@ -173,6 +198,16 @@ const UserWorkoutDetail = () => {
                 <tr>
                   <td colSpan="5" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
                     {exercise.name}
+                    {exercise.videoURL != null && exercise.videoURL.trim() !== '' && (
+                      <a
+                        href={exercise.videoURL}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ marginLeft: '10px' }}
+                      >
+                        View Video
+                      </a>
+                    )}
                   </td>
                 </tr>
                 <tr>
