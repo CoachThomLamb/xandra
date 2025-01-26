@@ -42,7 +42,6 @@ const AdminDashboard = () => {
         if (exerciseData.id === undefined) {
           throw new Error('Invalid exercise data: exerciseId is undefined');
         }
-        console.log('Template orderBy:', exerciseData.orderBy, exerciseData.name, exerciseData.videoURL);
         const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), {
           name: exerciseData.name,
           orderBy: exerciseData.orderBy, // Ensure orderBy is copied correctly

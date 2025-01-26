@@ -65,7 +65,7 @@ const UserWorkoutDetail = () => {
       // Save exercises and sets
       for (const [exerciseIndex, exercise] of workout.exercises.entries()) {
         const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
-        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy || exerciseIndex });
+        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId });
 
         for (const [setIndex, set] of exercise.sets.entries()) {
           const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
@@ -85,6 +85,7 @@ const UserWorkoutDetail = () => {
     }
   };
   const getExerciseVideoURL = async (exerciseId) => {
+    console.log("exerciseId", exerciseId);
     try {
       const exerciseDoc = await getDoc(doc(db, 'exercises', exerciseId));
       if (exerciseDoc.exists()) {
@@ -129,13 +130,13 @@ const UserWorkoutDetail = () => {
               const setsSnapshot = await getDocs(setsCollection);
               const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() }));
               setsData.sort((a, b) => a.setNumber - b.setNumber); // Order sets by set number
-              console.log("exercise", exerciseDoc.id);
               const exerciseData = exerciseDoc.data();
               const name = exerciseData.name || '';
               const orderBy = exerciseData.orderBy;
               console.log("exerciseData", exerciseData);
+              const exerciseId = exerciseData.exerciseId;
               const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
-              return { id: exerciseDoc.id, name, videoURL, orderBy,  sets: setsData };
+              return { id: exerciseDoc.id, name, videoURL, exerciseId,  orderBy,  sets: setsData };
             })
           );
 
