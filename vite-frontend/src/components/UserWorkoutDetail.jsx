@@ -48,7 +48,8 @@ const UserWorkoutDetail = () => {
   const completeWorkout = async () => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, { completed: true, notes });
+      const completedAt = new Date().toISOString();
+      await updateDoc(workoutDocRef, { completed: true, notes, completedAt: completedAt });
       await saveWorkout();
       alert('Workout completed successfully!');
     } catch (error) {
@@ -196,7 +197,7 @@ const UserWorkoutDetail = () => {
             {(workout.exercises || []).map((exercise, exerciseIndex) => (
               <React.Fragment key={exerciseIndex}>
                 <tr>
-                  <td colSpan="5" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
                     {exercise.name}
                     {exercise.videoURL != null && exercise.videoURL.trim() !== '' && (
                       <a
@@ -214,7 +215,6 @@ const UserWorkoutDetail = () => {
                   <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-                  <th style={{ border: '1px solid black', padding: '8px' }}>Sets</th>
                   <th style={{ border: '1px solid black', padding: '4px' }}></th>
                 </tr>
                 {exercise.sets.map((set, setIndex) => (
@@ -237,14 +237,6 @@ const UserWorkoutDetail = () => {
                           style={{ width: '50px' }}
                         />
                       </td>
-                      <td style={{ border: '1px solid black', padding: '8px' }}>
-                        <input
-                          type="number"
-                          value={set.sets || ''}
-                          onChange={(e) => handleInputChange(exerciseIndex, setIndex, 'sets', e.target.value)}
-                          style={{ width: '50px' }}
-                        />
-                      </td>
                       <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '25px' }}>
                         <span
                           onClick={() => handleInputChange(exerciseIndex, setIndex, 'completed',!set.completed)}
@@ -259,7 +251,7 @@ const UserWorkoutDetail = () => {
                     </tr>
                     {setIndex === exercise.sets.length - 1 && (
                       <tr>
-                        <td colSpan="5" style={{ border: '1px solid black', padding: '8px' }}>
+                        <td colSpan="4" style={{ border: '1px solid black', padding: '8px' }}>
                           <label>Notes:</label>
                           <textarea
                             value={notes[exerciseIndex] || ''}
