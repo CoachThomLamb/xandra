@@ -103,7 +103,7 @@ function App() {
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Error signing in: ", error);
+      console.error("Error signing in:", error);
     }
   };
 
@@ -111,7 +111,7 @@ function App() {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error("Error signing out: ", error);
+      console.error("Error signing out:", error);
     }
   };
 
