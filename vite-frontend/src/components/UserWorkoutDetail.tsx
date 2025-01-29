@@ -3,38 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-interface ExerciseDefinition {
-  id: string;
-  name: string;
-  videoURL?: string;
-}
-
-interface Set {
-  id?: string;
-  setNumber: number;
-  reps: number;
-  load: number;
-  completed?: boolean;
-}
-
-interface ExerciseInstance {
-  id?: string;
-  exerciseId: string; // Reference to ExerciseDefinition
-  name: string;
-  orderBy: number;
-  sets: Set[];
-  notes?: string;
-  clientVideoURL?: string; // Add this line
-}
-
-interface Workout {
-  date: string;
-  coachNotes: string;
-  exercises: ExerciseInstance[];
-  notes?: Record<number, string>;
-  videoURL?: string;
-}
+import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/workout';
 
 const UserWorkoutDetail: React.FC = () => {
   const { userId, workoutId } = useParams<{ userId: string; workoutId: string }>();
@@ -127,8 +96,7 @@ const UserWorkoutDetail: React.FC = () => {
       // Save exercises and sets
       for (const [exerciseIndex, exercise] of workout!.exercises.entries()) {
         const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
-        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId });
-
+        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId, clientVideoURL: exercise.clientVideoURL });
         for (const [setIndex, set] of exercise.sets.entries()) {
           const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
           await setDoc(setDocRef, {
@@ -190,14 +158,22 @@ const UserWorkoutDetail: React.FC = () => {
               const setsCollection = collection(exerciseDoc.ref, 'sets');
               const setsSnapshot = await getDocs(setsCollection);
               const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() as Set }));
-              setsData.sort((a, b) => a.setNumber - b.setNumber); // Order sets by set number
+              setsData.sort((a, b) => a.setNumber - b.setNumber);
               const exerciseData = exerciseDoc.data();
               const name = exerciseData.name || '';
               const orderBy = exerciseData.orderBy;
-              console.log("exerciseData", exerciseData);
               const exerciseId = exerciseData.exerciseId;
               const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
-              return { id: exerciseDoc.id, name, videoURL, exerciseId,  orderBy,  sets: setsData };
+              const clientVideoURL = exerciseData.clientVideoURL || ''; // Add this line
+              return { 
+                id: exerciseDoc.id, 
+                name, 
+                videoURL, 
+                exerciseId, 
+                orderBy, 
+                sets: setsData,
+                clientVideoURL, // Add this line
+              };
             })
           );
 
@@ -246,6 +222,8 @@ const UserWorkoutDetail: React.FC = () => {
   return (
     <div style={{ overflowY: 'auto', overflowX: 'hidden', maxHeight: '100vh', maxWidth: '100vw', padding: '10px', boxSizing: 'border-box' , paddingBottom: '180px'}}>
       <h1>{clientName}'s Workout</h1>
+      <h2>Workout Name</h2>
+      <h2>{workout.title}</h2>
       <p>Date: {workout.date}</p>
       <h2>Coach Notes</h2>
       <p>{workout.coachNotes}</p>
