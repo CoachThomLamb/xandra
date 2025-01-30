@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithRedirect, signOut, User } from "firebase/auth";
 import { collection, getDocs } from 'firebase/firestore';
 import './App.css';
 import WorkoutDetail from './components/WorkoutDetail';
@@ -9,14 +9,19 @@ import UserWorkouts from './components/UserWorkouts';
 import UserWorkoutDetail from './components/UserWorkoutDetail';
 import { auth, db, getUserRole } from './firebaseConfig';
 import WorkoutTemplateBuilder from './components/WorkoutTemplateBuilder';
-// import ExerciseTracker from './components/ExerciseTracker';
 import ExerciseList from './components/ExerciseList';
 import LandingPage from './components/LandingPage';
-import UserFood from './components/UserFood'; // Import the UserFood component
+import UserFood from './components/UserFood';
 import ExerciseManagement from './components/ExerciseManagement';
 
+interface Workout {
+  title: string;
+  exercises: any[];
+  date: string;
+}
+
 function Workouts() {
-  const [workouts, setWorkouts] = useState([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,8 +40,8 @@ function Workouts() {
         });
         setWorkouts(workoutList);
       } else {
-        const storedWorkouts = JSON.parse(localStorage.getItem('workouts')) || [];
-        const parsedWorkouts = storedWorkouts.map(workout => ({
+        const storedWorkouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+        const parsedWorkouts = storedWorkouts.map((workout: Workout) => ({
           title: workout.title || 'Untitled Workout',
           exercises: Array.isArray(workout.exercises) ? workout.exercises : [],
           date: workout.date || new Date().toISOString().split('T')[0],
@@ -49,7 +54,7 @@ function Workouts() {
   }, []);
 
   const addWorkout = () => {
-    const newWorkout = {
+    const newWorkout: Workout = {
       title: 'New Workout',
       exercises: [],
       date: new Date().toISOString().split('T')[0],
@@ -79,8 +84,7 @@ function Workouts() {
 }
 
 function App() {
-  
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -98,12 +102,21 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
+  const handleLoginWithPopup = async () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Error signing in:", error);
+      console.error("Error signing in with popup:", error);
+    }
+  };
+
+  const handleLoginWithRedirect = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      console.error("Error signing in with redirect:", error);
     }
   };
 
@@ -130,20 +143,19 @@ function App() {
               <Route path="/user-workouts/:userId/workouts/:workoutId" element={<UserWorkoutDetail />} />
               <Route path="/workout-template-builder" element={<WorkoutTemplateBuilder />} />
               <Route path="/admin/user/:userId" element={<UserWorkouts />} />
-              {/* <Route path="/exercise-tracker" element={<ExerciseTracker />} /> */}
               <Route path="/exercise-list" element={<ExerciseList />} />
-              <Route path="/user-food/:userId" element={<UserFood />} /> {/* Add the new route */}
+              <Route path="/user-food/:userId" element={<UserFood />} />
               <Route path="/exercise-management" element={<ExerciseManagement />} />
             </Routes>
           </div>
         ) : (
           <div>
-            <button onClick={handleLogin}>Login with Google</button>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/landing" element={<LandingPage />} />
-            
-          </Routes>
+            <button onClick={handleLoginWithPopup}>Login with Popup</button>
+            <button onClick={handleLoginWithRedirect}>Login with Redirect</button>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/landing" element={<LandingPage />} />
+            </Routes>
           </div>
         )}
       </div>
