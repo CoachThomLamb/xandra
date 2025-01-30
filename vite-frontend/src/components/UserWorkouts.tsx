@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
+import { Workout } from '../types/workout'; // Import Workout interface
 
-const UserWorkouts = () => {
-  const { userId: paramUserId } = useParams();
+const UserWorkouts: React.FC = () => {
+  const { userId: paramUserId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const [userId, setUserId] = useState(paramUserId || auth.currentUser?.uid);
-  const [workouts, setWorkouts] = useState([]);
-  const [clientName, setClientName] = useState('');
-  const [error, setError] = useState(null);
+  const [userId, setUserId] = useState<string | undefined>(paramUserId || auth.currentUser?.uid);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [clientName, setClientName] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!paramUserId && auth.currentUser) {
@@ -20,7 +21,7 @@ const UserWorkouts = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const userDoc = await getDoc(doc(db, 'users', userId));
+        const userDoc = await getDoc(doc(db, 'users', userId!));
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setClientName(`${userData.firstName} ${userData.lastName}`);
@@ -32,12 +33,12 @@ const UserWorkouts = () => {
 
     const fetchWorkouts = async () => {
       try {
-        const workoutsCollection = collection(db, 'users', userId, 'workouts');
+        const workoutsCollection = collection(db, 'users', userId!, 'workouts');
         const workoutSnapshot = await getDocs(workoutsCollection);
         const workoutList = workoutSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as Workout[];
         setWorkouts(workoutList);
       } catch (error) {
         console.error('Error fetching workouts:', error);
@@ -66,7 +67,7 @@ const UserWorkouts = () => {
         {currentWorkouts.map(workout => (
           <li key={workout.id}>
             <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
-              {workout.title} - {workout.date}
+              {workout.title} - {workout.assignedDate}
             </Link>
           </li>
         ))}
@@ -77,7 +78,7 @@ const UserWorkouts = () => {
         {pastWorkouts.map(workout => (
           <li key={workout.id}>
             <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
-              {workout.title} - {workout.date}
+              {workout.title} - {workout.completedAt}
             </Link>
           </li>
         ))}
