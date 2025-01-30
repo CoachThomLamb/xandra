@@ -20,6 +20,7 @@ export interface ExerciseInstance {
   sets: Set[];
   notes?: string;
   clientVideoURL?: string;
+  coachNotes?: string; // Add this line
 }
 
 export interface Workout {
