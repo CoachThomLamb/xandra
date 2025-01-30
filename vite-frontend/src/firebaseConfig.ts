@@ -42,14 +42,6 @@ const getUserRole = async (userId: string): Promise<string> => {
   }
 };
 
-const assignWorkoutTemplateToUser = async (templateId: string, userId: string): Promise<void> => {
-  try {
-    // ...existing code...
-  } catch (error) {
-    console.error('Error assigning workout template to user:', error);
-  }
-};
 
 
-
-export { auth, db, getUserRole, assignWorkoutTemplateToUser };
+export { auth, db, getUserRole };
