@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import './WorkoutTemplateBuilder.css';
 import { Set, ExerciseDefinition, Workout, ExerciseInstance } from '../types/workout';
 
-
+// create a workout tempalte 
 const WorkoutTemplateBuilder: React.FC = () => {
   const [title, setTitle] = useState<string>('');
   const [coachNotes, setCoachNotes] = useState<string>('');
