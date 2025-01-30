@@ -33,7 +33,7 @@ const AdminDashboard = () => {
       const templateData = templateDoc.data();
 
       const programmingRef = collection(db, 'users', userId, 'workouts');
-      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title, coachNotes: templateData.coachNotes, completed: false });
+      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title, coachNotes: templateData.coachNotes, completed: false,  assignedDate: new Date().toISOString() });
 
       const exercisesCollection = collection(templateDoc.ref, 'exercises');
       const exercisesSnapshot = await getDocs(exercisesCollection);
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
         if (exerciseData.id === undefined) {
           throw new Error('Invalid exercise data: exerciseId is undefined');
         }
-        const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), {
+          const newExerciseRef = await addDoc(collection(newWorkoutRef, 'exercises'), {
           name: exerciseData.name,
           orderBy: exerciseData.orderBy, // Ensure orderBy is copied correctly
           exerciseId: exerciseData.id, 
