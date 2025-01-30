@@ -59,6 +59,23 @@ const WorkoutTemplateBuilder: React.FC = () => {
       
       if (currentTemplateId) {
         workoutTemplateRef = doc(db, 'workout-templates', currentTemplateId);
+        
+        // Delete all existing exercises and their sets
+        const exercisesCollection = collection(workoutTemplateRef, 'exercises');
+        const exercisesSnapshot = await getDocs(exercisesCollection);
+        
+        for (const exerciseDoc of exercisesSnapshot.docs) {
+          // Delete all sets for this exercise
+          const setsCollection = collection(exerciseDoc.ref, 'sets');
+          const setsSnapshot = await getDocs(setsCollection);
+          for (const setDoc of setsSnapshot.docs) {
+            await deleteDoc(setDoc.ref);
+          }
+          // Delete the exercise
+          await deleteDoc(exerciseDoc.ref);
+        }
+
+        // Update the template
         await updateDoc(workoutTemplateRef, { 
           title, 
           coachNotes 
@@ -72,6 +89,8 @@ const WorkoutTemplateBuilder: React.FC = () => {
 
       // Save exercises and their sets as subcollections
       for (const exercise of exercises) {
+        if (!exercise.name) continue; // Skip empty exercises
+        
         const exerciseRef = await addDoc(collection(workoutTemplateRef, 'exercises'), {
           name: exercise.name,
           id: exercise.id,
