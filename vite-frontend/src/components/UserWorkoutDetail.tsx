@@ -1,12 +1,13 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import {auth, db, getUserRole } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/workout';
 
 const UserWorkoutDetail: React.FC = () => {
   const { userId, workoutId } = useParams<{ userId: string; workoutId: string }>();
+  const navigate = useNavigate();
   
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [clientName, setClientName] = useState('');
@@ -14,6 +15,7 @@ const UserWorkoutDetail: React.FC = () => {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoURL, setVideoURL] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   type SetField = 'reps' | 'load' | 'completed';
   type SetValue = number | boolean;
@@ -211,6 +213,14 @@ const UserWorkoutDetail: React.FC = () => {
     };
   }, [workout, notes]);
 
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const role = await getUserRole(auth.currentUser?.uid || '');
+      setIsAdmin(role === 'admin');
+    };
+    checkAdminStatus();
+  }, []);
+
   if (error) {
     return <div>{error}</div>;
   }
@@ -348,6 +358,15 @@ const UserWorkoutDetail: React.FC = () => {
         )}
       </div>
       <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
+      {isAdmin && (
+        <button 
+          onClick={() => navigate(`/user-workouts/${userId}/workouts/${workoutId}/feedback`)}
+          className="feedback-button"
+          style={{ marginLeft: '10px' }}
+        >
+          Provide Feedback
+        </button>
+      )}
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
         <button>Back to Workouts</button>
       </Link>

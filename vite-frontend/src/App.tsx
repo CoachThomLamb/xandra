@@ -13,6 +13,7 @@ import ExerciseList from './components/ExerciseList';
 import LandingPage from './components/LandingPage';
 import UserFood from './components/UserFood';
 import ExerciseManagement from './components/ExerciseManagement';
+import FeedbackWorkout from './components/FeedbackWorkout';
 
 interface Workout {
   title: string;
@@ -146,6 +147,7 @@ function App() {
               <Route path="/exercise-list" element={<ExerciseList />} />
               <Route path="/user-food/:userId" element={<UserFood />} />
               <Route path="/exercise-management" element={<ExerciseManagement />} />
+              <Route path="/user-workouts/:userId/workouts/:workoutId/feedback" element={<FeedbackWorkout />} />
             </Routes>
           </div>
         ) : (
