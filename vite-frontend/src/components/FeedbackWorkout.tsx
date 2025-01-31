@@ -119,40 +119,96 @@ const FeedbackWorkout: React.FC = () => {
 
   if (error) {
     return (
-      <div className="error-container" style={{ padding: '20px', color: 'red' }}>
+      <div className="error-container">
         <h2>Error</h2>
         <p>{error}</p>
-        <button onClick={() => navigate(`/user-workouts/${userId}`)}>
+        <button className="button" onClick={() => navigate(`/user-workouts/${userId}`)}>
           Back to Workouts
         </button>
       </div>
     );
   }
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
-    <div>
-      <h1>Provide Feedback - {workout?.title}</h1>
-      {exercises.map((exercise) => (
-        <div key={exercise.id} className="exercise-feedback">
-          <h3>{exercise.name}</h3>
-          <div className="sets-display">
-            {exercise.sets.map((set, index) => (
-              <div key={index}>
-                Set {set.setNumber}: {set.reps} reps @ {set.load}
+    <div className="workout-detail-container" style={{ 
+      height: 'calc(100vh - 264px)', // Assuming 64px header/nav
+      overflowY: 'auto',
+      padding: '20px', 
+      paddingBottom: '100px' // Increased padding to account for fixed button
+    }}>
+      <h1 className="workout-title">Provide Feedback - {workout?.title}</h1>
+      
+      <div className="exercises-container">
+        {exercises.map((exercise) => (
+          <div key={exercise.id} className="exercise-card">
+            <h2 className="exercise-name">{exercise.name}</h2>
+            
+            <div className="exercise-content">
+              <div className="video-section">
+                {exercise.clientVideoURL ? (
+                  <div className="video-container">
+                    <h3>Client Submitted Video</h3>
+                    <div className="video-wrapper">
+                      <iframe
+                        src={exercise.clientVideoURL}
+                        title="Client Video"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="video-container">
+                    <p>No video submitted by client</p>
+                  </div>
+                )}
               </div>
-            ))}
+
+              <div className="exercise-details">
+                <div className="sets-section">
+                  <h3>Sets</h3>
+                  <div className="sets-container">
+                    {exercise.sets.map((set, index) => (
+                      <div key={index} className="set-item">
+                        Set {set.setNumber}: {set.reps} reps @ {set.load}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="feedback-section">
+                  <h3>Coach Feedback</h3>
+                  <textarea
+                    className="feedback-textarea"
+                    value={exercise.coachNotes || ''}
+                    onChange={(e) => handleCoachNotesChange(exercise.id!, e.target.value)}
+                    placeholder="Add feedback for this exercise..."
+                    rows={4}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-          <textarea
-            value={exercise.coachNotes || ''}
-            onChange={(e) => handleCoachNotesChange(exercise.id!, e.target.value)}
-            placeholder="Add feedback for this exercise..."
-            rows={4}
-          />
-        </div>
-      ))}
-      <button onClick={handleSave}>Save Feedback & Create New Workout</button>
+        ))}
+      </div>
+
+      <div className="button-container" style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: '20px',
+        background: 'white',
+        boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <button className="button primary" onClick={handleSave}>
+          Save Feedback & Create New Workout
+        </button>
+      </div>
     </div>
   );
 };
