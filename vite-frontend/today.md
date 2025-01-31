@@ -1,0 +1,32 @@
+This is just a markdown file where we put runnign notes for the day
+- Maude shoudl be able to upload videos 
+- In the early days we can't let our wanting this app interfere with people getting workouts in or we will have to keep rebuilding motivated clients which is a pain in the ass 
+ - Just simplifying this process for clients will have value
+ - I also feel a need to want to add complexity bc complexity is something people move towards as an avoidance tactic. 
+ - Jan might be a good one for that 
+ - - first question can Maude upload videos for each exercise right now 
+ - Then can we send her feedback from her last video 
+ - Then can she see the last workout performance on the current workout 
+ - That will be enough if we can get that working today 
+ - After that maybe we can see when people have compelted workouts - which we can but it would be ncie if we got sam tracking better 
+ - Sam said he did cardio and he didn't see the value in tracking it. 
+ - Who are the next people to onboard 
+ - Jan, Pruthvi, Lucky, Jade 
+ - boring shit 
+   - need to clean up the git ignore and git files 
+   - Sushil will need this 
+   - plan to spend time on InCharge next week - updated time sheet. 
+   - find a group online to help you build this app ? 
+- Maude is doing a great job of usinig the app. 
+- I need to be able as a coach to upload updated videos to her. today I had to oopen her workout, and add notes there. 
+- It would be better if the size of the note would change default display size. 
+- I want to predict the problems and solve them without seeing them but I have to be patient and let them show up first ? 
+- I don't have enough data to solve it yet ? 
+- WAtch videos review last workout give feedback generate new workout -
+- Iteration cycle shyoudl be right aftrer workout and then next woprkout 
+- I think thats why we lose 
+- onboarding session over zoom ?
+- Then design workout and load it up on tracker 
+- have them do it once,  watch videos,  and track performance , then modify woirkout the workout and send it back to them 
+- watch video send feedback goes to the nexts time they do this exercise ? 
+- 

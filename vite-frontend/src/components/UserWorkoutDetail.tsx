@@ -249,6 +249,11 @@ const UserWorkoutDetail: React.FC = () => {
                   </td>
                 </tr>
                 <tr>
+                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontStyle: 'italic' }}>
+                    {exercise.coachNotes ||'coach notes' }
+                  </td>
+                </tr>
+                <tr>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
                   <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
