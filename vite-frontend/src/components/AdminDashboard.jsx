@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const [workoutTemplates, setWorkoutTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
+  const [dueDate, setDueDate] = useState(''); // Add this line
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -27,18 +28,19 @@ const AdminDashboard = () => {
     fetchWorkoutTemplates();
   }, []);
 
-  const assignTemplateToUser = async (templateId, userId) => {
+  const assignTemplateToUser = async (templateId, userId, dueDate) => {
     try {
       const templateDoc = await getDoc(doc(db, 'workout-templates', templateId));
       const templateData = templateDoc.data();
 
       const programmingRef = collection(db, 'users', userId, 'workouts');
-      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title, coachNotes: templateData.coachNotes, completed: false,  assignedDate: new Date().toISOString() });
+      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title, coachNotes: templateData.coachNotes, completed: false, assignedDate: new Date().toISOString(), dueDate }); // Update this line
 
       const exercisesCollection = collection(templateDoc.ref, 'exercises');
       const exercisesSnapshot = await getDocs(exercisesCollection);
       for (const exerciseDoc of exercisesSnapshot.docs) {
         const exerciseData = exerciseDoc.data();
+        console.log('Copying exercise:', exerciseData);
         if (exerciseData.id === undefined) {
           throw new Error('Invalid exercise data: exerciseId is undefined');
         }
@@ -47,6 +49,7 @@ const AdminDashboard = () => {
           orderBy: exerciseData.orderBy, // Ensure orderBy is copied correctly
           exerciseId: exerciseData.id, 
           videoURL: exerciseData.videoURL || '',
+          coachNotes: exerciseData.coachNotes || '' // Ensure coachNotes is copied
         });
         // console.log('Copied orderBy:', newExerciseRef.data().orderBy);
 
@@ -66,11 +69,11 @@ const AdminDashboard = () => {
   };
 
   const handleAssignTemplate = async () => {
-    if (selectedTemplate && selectedUser) {
-      await assignTemplateToUser(selectedTemplate, selectedUser);
+    if (selectedTemplate && selectedUser && dueDate) {
+      await assignTemplateToUser(selectedTemplate, selectedUser, dueDate); // Update this line
       alert('Workout template assigned successfully');
     } else {
-      alert('Please select a user and a workout template');
+      alert('Please select a user, a workout template, and a due date');
     }
   };
 
@@ -86,6 +89,10 @@ const AdminDashboard = () => {
             <option key={user.id} value={user.id}>{user.email}</option>
           ))}
         </select>
+      </div>
+      <div>
+        <label>Due Date:</label>
+        <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /> {/* Add this line */}
       </div>
       <div>
         <label>Select Workout Template:</label>

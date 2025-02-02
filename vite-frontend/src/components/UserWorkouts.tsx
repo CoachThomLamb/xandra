@@ -52,6 +52,11 @@ const UserWorkouts: React.FC = () => {
     }
   }, [userId]);
 
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
   const currentWorkouts = workouts.filter(workout => !workout.completed);
   const pastWorkouts = workouts.filter(workout => workout.completed);
 
@@ -67,7 +72,7 @@ const UserWorkouts: React.FC = () => {
         {currentWorkouts.map(workout => (
           <li key={workout.id}>
             <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
-              {workout.title} - {workout.assignedDate}
+              {workout.title} - {workout.dueDate ? formatDate(workout.dueDate) : 'No due date'}
             </Link>
           </li>
         ))}
@@ -78,7 +83,7 @@ const UserWorkouts: React.FC = () => {
         {pastWorkouts.map(workout => (
           <li key={workout.id}>
             <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
-              {workout.title} - {workout.completedAt}
+              {workout.title} - {workout.completedAt ? formatDate(workout.completedAt) : 'No completion date'}
             </Link>
           </li>
         ))}

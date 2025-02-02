@@ -30,4 +30,5 @@ export interface Workout {
   notes?: Record<number, string>;
   videoURL?: string;
   title?: string;
+  dueDate?: string; // Add this line
 }

@@ -14,6 +14,7 @@ const UserWorkoutDetail: React.FC = () => {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoURL, setVideoURL] = useState('');
+  const [dueDate, setDueDate] = useState<string | null>(null); // Add this line
 
   type SetField = 'reps' | 'load' | 'completed';
   type SetValue = number | boolean;
@@ -91,19 +92,19 @@ const UserWorkoutDetail: React.FC = () => {
   const saveWorkout = async () => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, { notes });
+      await updateDoc(workoutDocRef, { notes, dueDate }); // Update this line
 
       // Save exercises and sets
       for (const [exerciseIndex, exercise] of workout!.exercises.entries()) {
         const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
-        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId, clientVideoURL: exercise.clientVideoURL });
+        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId, clientVideoURL: exercise.clientVideoURL , coachNotes: exercise.coachNotes}); // Add this line
         for (const [setIndex, set] of exercise.sets.entries()) {
           const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
           await setDoc(setDocRef, {
             setNumber: set.setNumber,
             reps: set.reps,
             load: set.load,
-            sets: set.sets || 0,
+            
             completed: set.completed || false,
           });
         }
@@ -165,6 +166,7 @@ const UserWorkoutDetail: React.FC = () => {
               const exerciseId = exerciseData.exerciseId;
               const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
               const clientVideoURL = exerciseData.clientVideoURL || ''; // Add this line
+              const coachNotes = exerciseData.coachNotes || ''; // Add this line
               return { 
                 id: exerciseDoc.id, 
                 name, 
@@ -172,7 +174,8 @@ const UserWorkoutDetail: React.FC = () => {
                 exerciseId, 
                 orderBy, 
                 sets: setsData,
-                clientVideoURL, // Add this line
+                clientVideoURL, 
+                coachNotes,// Add this line
               };
             })
           );
@@ -184,6 +187,7 @@ const UserWorkoutDetail: React.FC = () => {
           setWorkout({ ...workoutData, exercises: exercisesData });
           setNotes(workoutData.notes || {});
           setVideoURL(workoutData.videoURL || '');
+          setDueDate(workoutData.dueDate || ''); // Add this line
         } else {
           setError('Workout not found');
         }
@@ -225,6 +229,7 @@ const UserWorkoutDetail: React.FC = () => {
       <h2>Workout Name</h2>
       <h2>{workout.title}</h2>
       <p>Date: {workout.date}</p>
+      <p>Due Date: {dueDate}</p> {/* Update this line */}
       <h2>Coach Notes</h2>
       <p>{workout.coachNotes}</p>
       <h2>Exercises</h2>
@@ -246,6 +251,11 @@ const UserWorkoutDetail: React.FC = () => {
                         View Demo Video
                       </a>
                     )}
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                    Coach Notes: {exercise.coachNotes}
                   </td>
                 </tr>
                 <tr>
