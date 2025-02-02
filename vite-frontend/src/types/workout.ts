@@ -30,4 +30,6 @@ export interface Workout {
   notes?: Record<number, string>;
   videoURL?: string;
   title?: string;
+  assignedDate?: string; // New field added
+  feedbackReceived?: boolean; // New field added
 }

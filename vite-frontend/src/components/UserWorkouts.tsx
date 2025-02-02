@@ -11,6 +11,7 @@ const UserWorkouts: React.FC = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [clientName, setClientName] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [feedbackReceivedWorkouts, setFeedbackReceivedWorkouts] = useState<Workout[]>([]);
 
   useEffect(() => {
     if (!paramUserId && auth.currentUser) {
@@ -40,6 +41,9 @@ const UserWorkouts: React.FC = () => {
           ...doc.data()
         })) as Workout[];
         setWorkouts(workoutList);
+
+        const feedbackReceived = workoutList.filter(workout => workout.feedbackReceived);
+        setFeedbackReceivedWorkouts(feedbackReceived);
       } catch (error) {
         console.error('Error fetching workouts:', error);
         setError('Error fetching workouts. Please try again later.');
@@ -79,6 +83,17 @@ const UserWorkouts: React.FC = () => {
           <li key={workout.id}>
             <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
               {workout.title} - {workout.completedAt}
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      <h2>Feedback Received Workouts</h2>
+      <ul>
+        {feedbackReceivedWorkouts.map(workout => (
+          <li key={workout.id}>
+            <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
+              {workout.title}
             </Link>
           </li>
         ))}

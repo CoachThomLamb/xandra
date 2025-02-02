@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { Workout, ExerciseInstance, Set } from '../types/workout';
 
@@ -104,12 +104,19 @@ const FeedbackWorkout: React.FC = () => {
 
       const newWorkout: Workout = {
         ...workout,
-        exercises: exercises,
+        exercises: [], // Clear exercises array as they will be stored in a separate collection
         assignedDate: new Date().toISOString(),
+        feedbackReceived: true // Mark this workout as having received feedback
       };
       
       const workoutsCollection = collection(db, 'users', userId, 'workouts');
-      await setDoc(doc(workoutsCollection), newWorkout);
+      const newWorkoutRef = await addDoc(workoutsCollection, newWorkout); // Use addDoc to get the DocumentReference
+
+      const exercisesCollection = collection(newWorkoutRef, 'exercises');
+      await Promise.all(
+        exercises.map(exercise => addDoc(exercisesCollection, exercise))
+      );
+
       navigate(`/user-workouts/${userId}`);
     } catch (error) {
       console.error('Error saving feedback:', error);
