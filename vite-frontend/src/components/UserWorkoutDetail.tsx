@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/workout';
@@ -14,7 +14,7 @@ const UserWorkoutDetail: React.FC = () => {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoURL, setVideoURL] = useState('');
-  const [dueDate, setDueDate] = useState<string | null>(null); // Add this line
+  const [dueDate, setDueDate] = useState<string | null>(null);
 
   type SetField = 'reps' | 'load' | 'completed';
   type SetValue = number | boolean;
@@ -92,27 +92,79 @@ const UserWorkoutDetail: React.FC = () => {
   const saveWorkout = async () => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, { notes, dueDate }); // Update this line
+      await updateDoc(workoutDocRef, { notes, dueDate });
 
       // Save exercises and sets
+      const batch = writeBatch(db); // Use batch to optimize Firestore writes
       for (const [exerciseIndex, exercise] of workout!.exercises.entries()) {
         const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
-        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId, clientVideoURL: exercise.clientVideoURL , coachNotes: exercise.coachNotes}); // Add this line
+        batch.set(exerciseDocRef, {
+          name: exercise.name,
+          orderBy: exercise.orderBy,
+          exerciseId: exercise.exerciseId,
+          clientVideoURL: exercise.clientVideoURL,
+          coachNotes: exercise.coachNotes
+        });
+
         for (const [setIndex, set] of exercise.sets.entries()) {
           const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
-          await setDoc(setDocRef, {
+          batch.set(setDocRef, {
             setNumber: set.setNumber,
             reps: set.reps,
             load: set.load,
-            
             completed: set.completed || false,
           });
         }
       }
 
+      await batch.commit(); // Commit the batch
       console.log('Workout saved successfully!');
     } catch (error) {
       console.error('Error saving workout:', error);
+    }
+  };
+
+  const copyWorkout = async (originalWorkoutId: string, userId: string) => {
+    try {
+      // Get the original workout document
+      const originalWorkoutDocRef = doc(db, 'users', userId, 'workouts', originalWorkoutId);
+      const originalWorkoutDoc = await getDoc(originalWorkoutDocRef);
+
+      if (!originalWorkoutDoc.exists()) {
+        throw new Error('Original workout not found');
+      }
+
+      const originalWorkoutData = originalWorkoutDoc.data();
+
+      // Create a new workout document with the same information but a new ID
+      const newWorkoutDocRef = await addDoc(collection(db, 'users', userId, 'workouts'), {
+        ...originalWorkoutData,
+        completed: false,
+        completedAt: null,
+        parentWorkoutId: originalWorkoutId,
+        createdAt: new Date().toISOString()
+      });
+
+      // Copy exercises and sets
+      const batch = writeBatch(db); // Use batch to optimize Firestore writes
+      const exercisesSnapshot = await getDocs(collection(originalWorkoutDocRef, 'exercises'));
+      for (const exerciseDoc of exercisesSnapshot.docs) {
+        const exerciseData = exerciseDoc.data();
+        const newExerciseDocRef = doc(collection(newWorkoutDocRef, 'exercises'));
+        batch.set(newExerciseDocRef, exerciseData);
+
+        const setsSnapshot = await getDocs(collection(exerciseDoc.ref, 'sets'));
+        for (const setDoc of setsSnapshot.docs) {
+          const setData = setDoc.data();
+          const newSetDocRef = doc(collection(newExerciseDocRef, 'sets'));
+          batch.set(newSetDocRef, setData);
+        }
+      }
+
+      await batch.commit(); // Commit the batch
+      console.log('Workout copied successfully!');
+    } catch (error) {
+      console.error('Error copying workout:', error);
     }
   };
 
@@ -165,8 +217,8 @@ const UserWorkoutDetail: React.FC = () => {
               const orderBy = exerciseData.orderBy;
               const exerciseId = exerciseData.exerciseId;
               const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
-              const clientVideoURL = exerciseData.clientVideoURL || ''; // Add this line
-              const coachNotes = exerciseData.coachNotes || ''; // Add this line
+              const clientVideoURL = exerciseData.clientVideoURL || '';
+              const coachNotes = exerciseData.coachNotes || '';
               return { 
                 id: exerciseDoc.id, 
                 name, 
@@ -175,7 +227,7 @@ const UserWorkoutDetail: React.FC = () => {
                 orderBy, 
                 sets: setsData,
                 clientVideoURL, 
-                coachNotes,// Add this line
+                coachNotes,
               };
             })
           );
@@ -187,7 +239,7 @@ const UserWorkoutDetail: React.FC = () => {
           setWorkout({ ...workoutData, exercises: exercisesData });
           setNotes(workoutData.notes || {});
           setVideoURL(workoutData.videoURL || '');
-          setDueDate(workoutData.dueDate || ''); // Add this line
+          setDueDate(workoutData.dueDate || '');
         } else {
           setError('Workout not found');
         }
@@ -229,7 +281,7 @@ const UserWorkoutDetail: React.FC = () => {
       <h2>Workout Name</h2>
       <h2>{workout.title}</h2>
       <p>Date: {workout.date}</p>
-      <p>Due Date: {dueDate}</p> {/* Update this line */}
+      <p>Due Date: {dueDate}</p>
       <h2>Coach Notes</h2>
       <p>{workout.coachNotes}</p>
       <h2>Exercises</h2>
@@ -280,9 +332,8 @@ const UserWorkoutDetail: React.FC = () => {
                         <input
                           type="number"
                           value={set.load || ''}
-                          
                           onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
-                          style={{ width: '65px' }} // Update this line
+                          style={{ width: '65px' }}
                         />
                       </td>
                       <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '25px' }}>
