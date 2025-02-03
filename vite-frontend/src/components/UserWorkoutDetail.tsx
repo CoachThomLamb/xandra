@@ -280,8 +280,9 @@ const UserWorkoutDetail: React.FC = () => {
                         <input
                           type="number"
                           value={set.load || ''}
+                          
                           onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
-                          style={{ width: '50px' }}
+                          style={{ width: '65px' }} // Update this line
                         />
                       </td>
                       <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '25px' }}>
