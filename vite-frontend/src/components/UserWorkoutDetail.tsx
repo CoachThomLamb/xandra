@@ -1,5 +1,5 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -7,6 +7,7 @@ import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/wor
 
 const UserWorkoutDetail: React.FC = () => {
   const { userId, workoutId } = useParams<{ userId: string; workoutId: string }>();
+  const navigate = useNavigate();
   
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [clientName, setClientName] = useState('');
@@ -139,6 +140,7 @@ const UserWorkoutDetail: React.FC = () => {
       // Create a new workout document with the same information but a new ID
       const newWorkoutDocRef = await addDoc(collection(db, 'users', userId, 'workouts'), {
         ...originalWorkoutData,
+        title: `Copied from ${originalWorkoutData.title}`,
         completed: false,
         completedAt: null,
         parentWorkoutId: originalWorkoutId,
@@ -163,6 +165,11 @@ const UserWorkoutDetail: React.FC = () => {
 
       await batch.commit(); // Commit the batch
       console.log('Workout copied successfully!');
+
+      // Redirect to the copied workout
+      console.log('New workout ID:', newWorkoutDocRef.id);
+      navigate(`/user-workouts/${userId}/workouts/${newWorkoutDocRef.id}`);
+      // navigate(`/user-workouts/${userId}`);
     } catch (error) {
       console.error('Error copying workout:', error);
     }
@@ -405,6 +412,7 @@ const UserWorkoutDetail: React.FC = () => {
         )}
       </div>
       <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
+      <button onClick={() => copyWorkout(workoutId, userId)} style={{ marginTop: '20px' }}>Copy Workout</button>
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
         <button>Back to Workouts</button>
       </Link>
