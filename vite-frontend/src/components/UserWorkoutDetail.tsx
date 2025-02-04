@@ -15,7 +15,7 @@ const UserWorkoutDetail: React.FC = () => {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoURL, setVideoURL] = useState('');
-  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState<Date | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   type SetField = 'reps' | 'load' | 'completed';
@@ -186,6 +186,57 @@ const UserWorkoutDetail: React.FC = () => {
       alert('Error deleting workout. Please try again later.');
     }
   };
+  const fetchWorkout = async () => {
+    try {
+      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+      const workoutDoc = await getDoc(workoutDocRef);
+      if (workoutDoc.exists()) {
+        const workoutData = workoutDoc.data() as Workout;
+
+        const exercisesCollection = collection(workoutDocRef, 'exercises');
+        const exercisesSnapshot = await getDocs(exercisesCollection);
+        let exercisesData = await Promise.all(
+          exercisesSnapshot.docs.map(async (exerciseDoc) => {
+            const setsCollection = collection(exerciseDoc.ref, 'sets');
+            const setsSnapshot = await getDocs(setsCollection);
+            const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() as Set }));
+            setsData.sort((a, b) => a.setNumber - b.setNumber);
+            const exerciseData = exerciseDoc.data();
+            const name = exerciseData.name || '';
+            const orderBy = exerciseData.orderBy;
+            const exerciseId = exerciseData.exerciseId;
+            const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
+            const clientVideoURL = exerciseData.clientVideoURL || '';
+            const coachNotes = exerciseData.coachNotes || '';
+            return { 
+              id: exerciseDoc.id, 
+              name, 
+              videoURL, 
+              exerciseId, 
+              orderBy, 
+              sets: setsData,
+              clientVideoURL, 
+              coachNotes,
+            };
+          })
+        );
+
+        exercisesData.sort((a, b) => {
+          return a.orderBy - b.orderBy;
+        })
+
+        setWorkout({ ...workoutData, exercises: exercisesData });
+        setNotes(workoutData.notes || {});
+        setVideoURL(workoutData.videoURL || '');
+        setDueDate(workoutData.dueDate || null);
+      } else {
+        setError('Workout not found');
+      }
+    } catch (error) {
+      console.error('Error fetching workout:', error);
+      setError('Error fetching workout. Please try again later.');
+    }
+  };
 
   const getExerciseVideoURL = async (exerciseId: string): Promise<string> => {
     console.log("exerciseId", exerciseId);
@@ -203,6 +254,17 @@ const UserWorkoutDetail: React.FC = () => {
     }
   };
 
+  const deleteSet = async (exerciseId: string, setId: string) => {
+    try {
+      const setDocRef = doc(db, 'users', userId, 'workouts', workoutId, 'exercises', exerciseId, 'sets', setId);
+      await deleteDoc(setDocRef);
+      console.log('Set deleted successfully!');
+      fetchWorkout(); // Reload the workout to show the changes
+    } catch (error) {
+      console.error('Error deleting set:', error);
+      alert('Error deleting set. Please try again later.');
+    }
+  };
 
   const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newDueDate = e.target.value;
@@ -227,58 +289,7 @@ const UserWorkoutDetail: React.FC = () => {
         console.error('Error fetching user details:', error);
       }
     };
-
-    const fetchWorkout = async () => {
-      try {
-        const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-        const workoutDoc = await getDoc(workoutDocRef);
-        if (workoutDoc.exists()) {
-          const workoutData = workoutDoc.data() as Workout;
-
-          const exercisesCollection = collection(workoutDocRef, 'exercises');
-          const exercisesSnapshot = await getDocs(exercisesCollection);
-          let exercisesData = await Promise.all(
-            exercisesSnapshot.docs.map(async (exerciseDoc) => {
-              const setsCollection = collection(exerciseDoc.ref, 'sets');
-              const setsSnapshot = await getDocs(setsCollection);
-              const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() as Set }));
-              setsData.sort((a, b) => a.setNumber - b.setNumber);
-              const exerciseData = exerciseDoc.data();
-              const name = exerciseData.name || '';
-              const orderBy = exerciseData.orderBy;
-              const exerciseId = exerciseData.exerciseId;
-              const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
-              const clientVideoURL = exerciseData.clientVideoURL || '';
-              const coachNotes = exerciseData.coachNotes || '';
-              return { 
-                id: exerciseDoc.id, 
-                name, 
-                videoURL, 
-                exerciseId, 
-                orderBy, 
-                sets: setsData,
-                clientVideoURL, 
-                coachNotes,
-              };
-            })
-          );
-
-          exercisesData.sort((a, b) => {
-            return a.orderBy - b.orderBy;
-          })
-
-          setWorkout({ ...workoutData, exercises: exercisesData });
-          setNotes(workoutData.notes || {});
-          setVideoURL(workoutData.videoURL || '');
-          setDueDate(workoutData.dueDate || '');
-        } else {
-          setError('Workout not found');
-        }
-      } catch (error) {
-        console.error('Error fetching workout:', error);
-        setError('Error fetching workout. Please try again later.');
-      }
-    };
+    
 
     fetchUserDetails();
     fetchWorkout();
@@ -406,6 +417,7 @@ const UserWorkoutDetail: React.FC = () => {
                         >
                           {set.completed ? '✔️' : '⬜'}
                         </span>
+                        <button onClick={() => deleteSet(exercise.id, set.id)}>Delete</button>
                       </td>
                     </tr>
                     {setIndex === exercise.sets.length - 1 && (
