@@ -25,7 +25,6 @@ const UserWorkouts: React.FC = () => {
         const userDoc = await getDoc(doc(db, 'users', userId!));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          console.log('userData:', userData);
           setClientName(`${userData.firstName} ${userData.lastName}`);
           setIsAdmin(userData.role == 'admin');
         }

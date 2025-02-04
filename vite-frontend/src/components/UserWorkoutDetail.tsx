@@ -168,7 +168,6 @@ const UserWorkoutDetail: React.FC = () => {
       console.log('Workout copied successfully!');
 
       // Redirect to the copied workout
-      console.log('New workout ID:', newWorkoutDocRef.id);
       navigate(`/user-workouts/${userId}/workouts/${newWorkoutDocRef.id}`);
       // navigate(`/user-workouts/${userId}`);
     } catch (error) {
@@ -204,13 +203,6 @@ const UserWorkoutDetail: React.FC = () => {
     }
   };
 
-  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setWorkout((prevWorkout) => {
-      if (!prevWorkout) return null;
-      return { ...prevWorkout, date: e.target.value };
-    });
-    saveWorkout();
-  };
 
   const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newDueDate = e.target.value;
@@ -338,7 +330,6 @@ const UserWorkoutDetail: React.FC = () => {
       <h1>{clientName}'s Workout</h1>
       <h2>Workout Name</h2>
       <h2>{workout.title}</h2>
-      <p>Date: {workout.date}</p>
       <p>Due Date: {isAdmin ? (
         <input 
           type="date" 
@@ -394,7 +385,7 @@ const UserWorkoutDetail: React.FC = () => {
                           type="number"
                           value={set.reps || ''}
                           onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
-                          style={{ width: '50px' }}
+                          style={{ width: '65px' }}
                         />
                       </td>
                       <td style={{ border: '1px solid black', padding: '8px' }}>
@@ -473,14 +464,14 @@ const UserWorkoutDetail: React.FC = () => {
           </div>
         )}
       </div>
-      <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
+      <button onClick={completeWorkout} style={{ marginTop: '20px' }}>{workout.completed ? 'Workout completed' : 'Complete workout' }</button>
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
         <button>Back to Workouts</button>
       </Link>
-      <button onClick={deleteWorkout} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>Delete Workout</button>
       {isAdmin && (
         <div>
           <h2>Admin Actions</h2>
+          <button onClick={deleteWorkout} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>Delete Workout</button>
           <button onClick={() => copyWorkout(workoutId, userId)} style={{ marginTop: '20px' }}>Copy Workout</button>
         </div>
       )}
