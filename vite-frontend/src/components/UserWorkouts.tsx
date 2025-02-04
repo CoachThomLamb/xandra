@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { Workout } from '../types/workout'; // Import Workout interface
 
@@ -11,6 +11,7 @@ const UserWorkouts: React.FC = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [clientName, setClientName] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     if (!paramUserId && auth.currentUser) {
@@ -25,6 +26,7 @@ const UserWorkouts: React.FC = () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setClientName(`${userData.firstName} ${userData.lastName}`);
+          setIsAdmin(userData.role == 'admin');
         }
       } catch (error) {
         console.error('Error fetching user details:', error);
@@ -46,11 +48,24 @@ const UserWorkouts: React.FC = () => {
       }
     };
 
+
     if (userId) {
       fetchUserDetails();
       fetchWorkouts();
     }
   }, [userId]);
+
+  const deleteWorkout = async (workoutId: string) => {
+    try {
+      const workoutDocRef = doc(db, 'users', userId!, 'workouts', workoutId);
+      await deleteDoc(workoutDocRef);
+      setWorkouts(workouts.filter(workout => workout.id !== workoutId));
+      alert('Workout deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      alert('Error deleting workout. Please try again later.');
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -61,7 +76,7 @@ const UserWorkouts: React.FC = () => {
   const pastWorkouts = workouts.filter(workout => workout.completed);
 
   return (
-    <div>
+    <div style={{ overflowY: 'auto', overflowX: 'hidden', maxHeight: '100vh', maxWidth: '100vw', padding: '10px', boxSizing: 'border-box' , paddingBottom: '180px'}}>
       <h1>{clientName}'s Workouts</h1>
       {error && <p>{error}</p>}
 
@@ -69,24 +84,26 @@ const UserWorkouts: React.FC = () => {
 
       <h2>Current Workouts</h2>
       <ul>
-        {currentWorkouts.map(workout => (
-          <li key={workout.id}>
-            <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
-              {workout.title} - {workout.dueDate ? formatDate(workout.dueDate) : 'No due date'}
-            </Link>
-          </li>
-        ))}
+      {currentWorkouts.map(workout => (
+        <li key={workout.id}>
+        <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
+          {workout.title} - {workout.dueDate ? formatDate(workout.dueDate) : 'No due date'}
+        </Link>
+        {isAdmin ? <button onClick={() => deleteWorkout(workout.id)} style={{ marginLeft: '10px', color: 'red' }}>X</button> : null}
+        </li>
+      ))}
       </ul>
 
       <h2>Past Workouts</h2>
       <ul>
-        {pastWorkouts.map(workout => (
-          <li key={workout.id}>
-            <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
-              {workout.title} - {workout.completedAt ? formatDate(workout.completedAt) : 'No completion date'}
-            </Link>
-          </li>
-        ))}
+      {pastWorkouts.map(workout => (
+        <li key={workout.id}>
+        <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
+          {workout.title} - {workout.completedAt ? formatDate(workout.completedAt) : 'No completion date'}
+        </Link>
+        {isAdmin ? <button onClick={() => deleteWorkout(workout.id)} style={{ marginLeft: '10px', color: 'red' }}>X</button> : null}
+        </li>
+      ))}
       </ul>
     </div>
   );

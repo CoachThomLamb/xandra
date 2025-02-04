@@ -1,12 +1,13 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { collection, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/workout';
 
 const UserWorkoutDetail: React.FC = () => {
   const { userId, workoutId } = useParams<{ userId: string; workoutId: string }>();
+  const navigate = useNavigate();
   
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [clientName, setClientName] = useState('');
@@ -14,7 +15,8 @@ const UserWorkoutDetail: React.FC = () => {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoURL, setVideoURL] = useState('');
-  const [dueDate, setDueDate] = useState<string | null>(null); // Add this line
+  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   type SetField = 'reps' | 'load' | 'completed';
   type SetValue = number | boolean;
@@ -89,30 +91,99 @@ const UserWorkoutDetail: React.FC = () => {
     }
   };
 
-  const saveWorkout = async () => {
+  const saveWorkout = async (newDueDate?: string) => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, { notes, dueDate }); // Update this line
+      await updateDoc(workoutDocRef, { notes, dueDate: newDueDate || dueDate });
 
       // Save exercises and sets
+      const batch = writeBatch(db); // Use batch to optimize Firestore writes
       for (const [exerciseIndex, exercise] of workout!.exercises.entries()) {
         const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
-        await setDoc(exerciseDocRef, { name: exercise.name, orderBy: exercise.orderBy, exerciseId: exercise.exerciseId, clientVideoURL: exercise.clientVideoURL , coachNotes: exercise.coachNotes}); // Add this line
+        batch.set(exerciseDocRef, {
+          name: exercise.name,
+          orderBy: exercise.orderBy,
+          exerciseId: exercise.exerciseId,
+          clientVideoURL: exercise.clientVideoURL,
+          coachNotes: exercise.coachNotes
+        });
+
         for (const [setIndex, set] of exercise.sets.entries()) {
           const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
-          await setDoc(setDocRef, {
+          batch.set(setDocRef, {
             setNumber: set.setNumber,
             reps: set.reps,
             load: set.load,
-            
             completed: set.completed || false,
           });
         }
       }
 
+      await batch.commit(); // Commit the batch
       console.log('Workout saved successfully!');
     } catch (error) {
       console.error('Error saving workout:', error);
+    }
+  };
+
+  const copyWorkout = async (originalWorkoutId: string, userId: string) => {
+    try {
+      // Get the original workout document
+      const originalWorkoutDocRef = doc(db, 'users', userId, 'workouts', originalWorkoutId);
+      const originalWorkoutDoc = await getDoc(originalWorkoutDocRef);
+
+      if (!originalWorkoutDoc.exists()) {
+        throw new Error('Original workout not found');
+      }
+
+      const originalWorkoutData = originalWorkoutDoc.data();
+
+      // Create a new workout document with the same information but a new ID
+      const newWorkoutDocRef = await addDoc(collection(db, 'users', userId, 'workouts'), {
+        ...originalWorkoutData,
+        title: `Copied from ${originalWorkoutData.title}`,
+        completed: false,
+        completedAt: null,
+        parentWorkoutId: originalWorkoutId,
+        createdAt: new Date().toISOString()
+      });
+
+      // Copy exercises and sets
+      const batch = writeBatch(db); // Use batch to optimize Firestore writes
+      const exercisesSnapshot = await getDocs(collection(originalWorkoutDocRef, 'exercises'));
+      for (const exerciseDoc of exercisesSnapshot.docs) {
+        const exerciseData = exerciseDoc.data();
+        const newExerciseDocRef = doc(collection(newWorkoutDocRef, 'exercises'));
+        batch.set(newExerciseDocRef, exerciseData);
+
+        const setsSnapshot = await getDocs(collection(exerciseDoc.ref, 'sets'));
+        for (const setDoc of setsSnapshot.docs) {
+          const setData = setDoc.data();
+          const newSetDocRef = doc(collection(newExerciseDocRef, 'sets'));
+          batch.set(newSetDocRef, setData);
+        }
+      }
+
+      await batch.commit(); // Commit the batch
+      console.log('Workout copied successfully!');
+
+      // Redirect to the copied workout
+      navigate(`/user-workouts/${userId}/workouts/${newWorkoutDocRef.id}`);
+      // navigate(`/user-workouts/${userId}`);
+    } catch (error) {
+      console.error('Error copying workout:', error);
+    }
+  };
+
+  const deleteWorkout = async () => {
+    try {
+      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+      await deleteDoc(workoutDocRef);
+      alert('Workout deleted successfully!');
+      navigate(`/user-workouts/${userId}`);
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      alert('Error deleting workout. Please try again later.');
     }
   };
 
@@ -132,6 +203,17 @@ const UserWorkoutDetail: React.FC = () => {
     }
   };
 
+
+  const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newDueDate = e.target.value;
+    setDueDate(newDueDate);
+    setWorkout((prevWorkout) => {
+      if (!prevWorkout) return null;
+      return { ...prevWorkout, dueDate: newDueDate };
+    });
+    saveWorkout(newDueDate);
+  };
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
@@ -139,6 +221,7 @@ const UserWorkoutDetail: React.FC = () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setClientName(`${userData.firstName} ${userData.lastName}`);
+          setIsAdmin(userData.role === 'admin');
         }
       } catch (error) {
         console.error('Error fetching user details:', error);
@@ -165,8 +248,8 @@ const UserWorkoutDetail: React.FC = () => {
               const orderBy = exerciseData.orderBy;
               const exerciseId = exerciseData.exerciseId;
               const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
-              const clientVideoURL = exerciseData.clientVideoURL || ''; // Add this line
-              const coachNotes = exerciseData.coachNotes || ''; // Add this line
+              const clientVideoURL = exerciseData.clientVideoURL || '';
+              const coachNotes = exerciseData.coachNotes || '';
               return { 
                 id: exerciseDoc.id, 
                 name, 
@@ -175,7 +258,7 @@ const UserWorkoutDetail: React.FC = () => {
                 orderBy, 
                 sets: setsData,
                 clientVideoURL, 
-                coachNotes,// Add this line
+                coachNotes,
               };
             })
           );
@@ -187,7 +270,7 @@ const UserWorkoutDetail: React.FC = () => {
           setWorkout({ ...workoutData, exercises: exercisesData });
           setNotes(workoutData.notes || {});
           setVideoURL(workoutData.videoURL || '');
-          setDueDate(workoutData.dueDate || ''); // Add this line
+          setDueDate(workoutData.dueDate || '');
         } else {
           setError('Workout not found');
         }
@@ -215,6 +298,25 @@ const UserWorkoutDetail: React.FC = () => {
     };
   }, [workout, notes]);
 
+  const removeExercise = async (exerciseId: string) => {
+    try {
+      const workoutDocRef = doc(db, 'users', userId!, 'workouts', workoutId);
+      const exerciseDocRef = doc(workoutDocRef, 'exercises', exerciseId);
+      await deleteDoc(exerciseDocRef);
+
+      setWorkout((prevWorkout) => {
+        if (!prevWorkout) return null;
+        const updatedExercises = prevWorkout.exercises.filter((exercise) => exercise.id !== exerciseId);
+        return { ...prevWorkout, exercises: updatedExercises };
+      });
+
+      alert('Exercise removed successfully!');
+    } catch (error) {
+      console.error('Error removing exercise:', error);
+      alert('Error removing exercise. Please try again later.');
+    }
+  };
+
   if (error) {
     return <div>{error}</div>;
   }
@@ -228,8 +330,15 @@ const UserWorkoutDetail: React.FC = () => {
       <h1>{clientName}'s Workout</h1>
       <h2>Workout Name</h2>
       <h2>{workout.title}</h2>
-      <p>Date: {workout.date}</p>
-      <p>Due Date: {dueDate}</p> {/* Update this line */}
+      <p>Due Date: {isAdmin ? (
+        <input 
+          type="date" 
+          value={dueDate || ''} 
+          onChange={handleDueDateChange} 
+        />
+      ) : (
+        dueDate
+      )}</p>
       <h2>Coach Notes</h2>
       <p>{workout.coachNotes}</p>
       <h2>Exercises</h2>
@@ -250,6 +359,9 @@ const UserWorkoutDetail: React.FC = () => {
                       >
                         View Demo Video
                       </a>
+                    )}
+                    {isAdmin && (
+                      <button onClick={() => removeExercise(exercise.id)} style={{ marginLeft: '10px', color: 'red' }}>Remove Exercise</button>
                     )}
                   </td>
                 </tr>
@@ -273,16 +385,15 @@ const UserWorkoutDetail: React.FC = () => {
                           type="number"
                           value={set.reps || ''}
                           onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
-                          style={{ width: '50px' }}
+                          style={{ width: '65px' }}
                         />
                       </td>
                       <td style={{ border: '1px solid black', padding: '8px' }}>
                         <input
                           type="number"
                           value={set.load || ''}
-                          
                           onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
-                          style={{ width: '65px' }} // Update this line
+                          style={{ width: '65px' }}
                         />
                       </td>
                       <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '25px' }}>
@@ -353,10 +464,27 @@ const UserWorkoutDetail: React.FC = () => {
           </div>
         )}
       </div>
-      <button onClick={completeWorkout} style={{ marginTop: '20px' }}>Complete Workout</button>
+      <button 
+        onClick={completeWorkout} 
+        style={{ 
+          marginTop: '20px', 
+          backgroundColor: workout.completed ? 'lightgreen' : 'black', 
+          color: workout.completed ? 'black' : 'white',
+          border: workout.completed ? '2px solid green' : 'initial' 
+        }}
+      >
+        {workout.completed ? 'Workout completed' : 'Complete workout' }
+      </button>
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
         <button>Back to Workouts</button>
       </Link>
+      {isAdmin && (
+        <div>
+          <h2>Admin Actions</h2>
+          <button onClick={deleteWorkout} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>Delete Workout</button>
+          <button onClick={() => copyWorkout(workoutId, userId)} style={{ marginTop: '20px' }}>Copy Workout</button>
+        </div>
+      )}
     </div>
   );
 };

@@ -24,11 +24,13 @@ export interface ExerciseInstance {
 }
 
 export interface Workout {
-  date: string;
+  id: string
   coachNotes: string;
   exercises: ExerciseInstance[];
   notes?: Record<number, string>;
   videoURL?: string;
   title?: string;
-  dueDate?: string; // Add this line
+  completed?: boolean;
+  completedAt?: Date;
+  dueDate?: Date; // Add this line
 }
