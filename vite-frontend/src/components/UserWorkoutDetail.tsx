@@ -1,7 +1,7 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, writeBatch, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { auth,  db } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/workout';
 
@@ -276,6 +276,23 @@ const UserWorkoutDetail: React.FC = () => {
     saveWorkout(newDueDate);
   };
 
+  const addSet = async (exerciseId: string) => {
+    try {
+      const newSet = {
+        setNumber: workout!.exercises.find(ex => ex.id === exerciseId)!.sets.length + 1,
+        reps: 0,
+        load: 0,
+        completed: false,
+      };
+      const setDocRef = await addDoc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises', exerciseId, 'sets'), newSet);
+      console.log('Set added successfully!', setDocRef.id);
+      fetchWorkout(); // Reload the workout to show the changes
+    } catch (error) {
+      console.error('Error adding set:', error);
+      alert('Error adding set. Please try again later.');
+    }
+  };
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
@@ -283,12 +300,30 @@ const UserWorkoutDetail: React.FC = () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setClientName(`${userData.firstName} ${userData.lastName}`);
-          setIsAdmin(userData.role === 'admin');
+          
         }
       } catch (error) {
         console.error('Error fetching user details:', error);
       }
     };
+    const checkAdminPrivileges = async () => {
+      try {
+        const user = auth.currentUser;
+        console.log('user:', user);
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log('userData:', userData.role);
+            setIsAdmin(userData.role === 'admin' || false);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking admin privileges:', error);
+      }
+    };
+
+    checkAdminPrivileges();
     
 
     fetchUserDetails();
@@ -454,6 +489,11 @@ const UserWorkoutDetail: React.FC = () => {
                                 </a>
                               )}
                             </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
+                            <button onClick={() => addSet(exercise.id)}>Add Set</button>
                           </td>
                         </tr>
                       </>
