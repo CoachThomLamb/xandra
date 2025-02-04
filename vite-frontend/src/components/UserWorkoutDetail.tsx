@@ -464,7 +464,17 @@ const UserWorkoutDetail: React.FC = () => {
           </div>
         )}
       </div>
-      <button onClick={completeWorkout} style={{ marginTop: '20px' }}>{workout.completed ? 'Workout completed' : 'Complete workout' }</button>
+      <button 
+        onClick={completeWorkout} 
+        style={{ 
+          marginTop: '20px', 
+          backgroundColor: workout.completed ? 'lightgreen' : 'black', 
+          color: workout.completed ? 'black' : 'white',
+          border: workout.completed ? '2px solid green' : 'initial' 
+        }}
+      >
+        {workout.completed ? 'Workout completed' : 'Complete workout' }
+      </button>
       <Link to={`/user-workouts/${userId}`} style={{ marginTop: '20px', marginLeft: '10px', display: 'inline-block' }}>
         <button>Back to Workouts</button>
       </Link>
