@@ -6,6 +6,7 @@ import { Workout } from '../types/workout'; // Import Workout interface
 
 const UserWorkouts: React.FC = () => {
   const { userId: paramUserId } = useParams<{ userId: string }>();
+  
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | undefined>(paramUserId || auth.currentUser?.uid);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -26,12 +27,29 @@ const UserWorkouts: React.FC = () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setClientName(`${userData.firstName} ${userData.lastName}`);
-          setIsAdmin(userData.role == 'admin');
         }
       } catch (error) {
         console.error('Error fetching user details:', error);
       }
     };
+    const checkAdminPrivileges = async () => {
+      try {
+        const user = auth.currentUser;
+        console.log('user:', user);
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log('userData:', userData.role);
+            setIsAdmin(userData.role === 'admin' || false);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking admin privileges:', error);
+      }
+    };
+
+    checkAdminPrivileges();
 
     const fetchWorkouts = async () => {
       try {
