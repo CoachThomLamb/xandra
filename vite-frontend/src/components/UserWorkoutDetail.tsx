@@ -376,6 +376,9 @@ const UserWorkoutDetail: React.FC = () => {
       <h1>{clientName}'s Workout</h1>
       <h2>Workout Name</h2>
       <h2>{workout.title}</h2>
+      {workout.completedAt && (
+        <p>Completed At: {new Date(workout.completedAt).toLocaleDateString()}</p>
+      )}
       <p>Due Date: {isAdmin ? (
         <input 
           type="date" 
