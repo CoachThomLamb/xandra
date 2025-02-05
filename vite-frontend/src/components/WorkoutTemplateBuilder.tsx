@@ -2,22 +2,20 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ExerciseList from './ExerciseList';
+import ExerciseAutoComplete from './ExerciseAutoComplete';
 import { Link } from 'react-router-dom';
 import './WorkoutTemplateBuilder.css';
 import { Set, ExerciseDefinition, Workout, ExerciseInstance } from '../types/workout';
 
-// create a workout tempalte 
+// create a workout template 
 const WorkoutTemplateBuilder: React.FC = () => {
   const [title, setTitle] = useState<string>('');
   const [coachNotes, setCoachNotes] = useState<string>('');
   const [exercises, setExercises] = useState<ExerciseInstance[]>([
-    { id: '', name: '',exerciseId: '',  clientVideoURL: '', sets: [{ setNumber: 1, reps: 0, load: 0 }], orderBy: 0 }
+    { id: '', name: '', exerciseId: '', clientVideoURL: '', sets: [{ setNumber: 1, reps: 0, load: 0 }], orderBy: 0 }
   ]);
   const [templates, setTemplates] = useState<Workout[]>([]);
-  const [exerciseNames, setExerciseNames] = useState<{ id: string; name: string; }[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
-  const [exerciseMap, setExerciseMap] = useState<Record<string, string>>({});
-  const [filteredNames, setFilteredNames] = useState<{ id: string; name: string; }[]>([]);
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
 
   // ...existing code...
@@ -36,21 +34,10 @@ const WorkoutTemplateBuilder: React.FC = () => {
     setExercises(updatedExercises);
   };
 
-  const handleExerciseNameInput = (index: number, typed: string) => {
-    const updated = [...exercises];
-    updated[index].name = typed;
-    updated[index].id = '';
-    
-    const found = filteredNames.find(
-      (ex) => ex.name.toLowerCase() === typed.toLowerCase()
-    );
-    updated[index].id = found ? found.id : '';
-    setExercises(updated);
-
-    const filtered = exerciseNames.filter((ex) =>
-      ex.name.toLowerCase().includes(typed.toLowerCase())
-    );
-    setFilteredNames(filtered);
+  const onExerciseChange = (index: number, field: keyof ExerciseInstance, value: string) => {
+    const updatedExercises = [...exercises];
+    updatedExercises[index][field] = value;
+    setExercises(updatedExercises);
   };
 
   const saveWorkoutTemplate = async () => {
@@ -171,24 +158,7 @@ const WorkoutTemplateBuilder: React.FC = () => {
     };
 
     fetchTemplates();
-    fetchExerciseNames();
   }, []);
-
-  useEffect(() => {
-    setFilteredNames(exerciseNames);
-  }, [exerciseNames]);
-
-  const fetchExerciseNames = async () => {
-    const exerciseCollection = collection(db, 'exercises');
-    const exerciseSnapshot = await getDocs(exerciseCollection);
-    const names = exerciseSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-    setExerciseNames(names);
-    const map: Record<string, string> = {};
-    names.forEach(exercise => {
-      map[exercise.name] = exercise.id;
-    });
-    setExerciseMap(map);
-  };
 
   const addExercise = () => {
     setExercises([...exercises, { 
@@ -198,23 +168,6 @@ const WorkoutTemplateBuilder: React.FC = () => {
       sets: [{ setNumber: 1, reps: 0, load: 0 }], 
       orderBy: exercises.length 
     }]);
-  };
-
-  const updateExercise = async (index: number, field: keyof ExerciseInstance, value: string) => {
-    const updatedExercises = [...exercises];
-    updatedExercises[index][field] = value;
-    if (field === 'id') {
-      const exerciseDoc = await getDoc(doc(db, 'exercises', value));
-      if (exerciseDoc.exists()) {
-        updatedExercises[index].name = exerciseDoc.data().name;
-        updatedExercises[index].exerciseId = value;
-      }
-    }
-    setExercises(updatedExercises);
-  };
-
-  const handleExerciseSelect = async (index: number, selectedId: string) => {
-    await updateExercise(index, 'id', selectedId);
   };
 
   const addSet = (exerciseIndex: number) => {
@@ -270,19 +223,11 @@ const WorkoutTemplateBuilder: React.FC = () => {
             <tbody>
               <tr>
                 <td colSpan={3} style={{ border: '1px solid black', padding: '8px', backgroundColor: '#f5f5f5' }}>
-                  <label>Exercise Name: </label>
-                  <input
-                    type="text"
-                    list={`exercise-names-${i}`}
-                    value={exercise.name}
-                    onChange={(e) => handleExerciseNameInput(i, e.target.value)}
-                    style={{ width: '60%', marginLeft: '10px' }}
+                  <ExerciseAutoComplete
+                    exercise={exercise}
+                    index={i}
+                    onExerciseChange={onExerciseChange}
                   />
-                  <datalist id={`exercise-names-${i}`}>
-                    {filteredNames.map((item, idx) => (
-                      <option key={idx} value={item.name} />
-                    ))}
-                  </datalist>
                 </td>
               </tr>
               <tr>
