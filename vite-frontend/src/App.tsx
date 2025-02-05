@@ -111,14 +111,6 @@ function App() {
     }
   };
 
-  const handleLoginWithRedirect = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithRedirect(auth, provider);
-    } catch (error) {
-      console.error("Error signing in with redirect:", error);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -151,7 +143,6 @@ function App() {
         ) : (
           <div>
             <button onClick={handleLoginWithPopup}>Login with Popup</button>
-            <button onClick={handleLoginWithRedirect}>Login with Redirect</button>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/landing" element={<LandingPage />} />
