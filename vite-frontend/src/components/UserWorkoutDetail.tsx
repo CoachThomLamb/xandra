@@ -4,6 +4,7 @@ import { collection, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, writeBatch
 import { auth,  db } from '../firebaseConfig';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/workout';
+import ExerciseTable from './ExerciseTable';
 
 const UserWorkoutDetail: React.FC = () => {
   const { userId, workoutId } = useParams<{ userId: string; workoutId: string }>();
@@ -391,123 +392,17 @@ const UserWorkoutDetail: React.FC = () => {
       <h2>Coach Notes</h2>
       <p>{workout.coachNotes}</p>
       <h2>Exercises</h2>
-      <div>
-        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-          <tbody>
-            {(workout.exercises || []).map((exercise, exerciseIndex) => (
-              <React.Fragment key={exerciseIndex}>
-                <tr>
-                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
-                    {exercise.name}
-                    {exercise.videoURL != null && exercise.videoURL.trim() !== '' && (
-                      <a
-                        href={exercise.videoURL}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ marginLeft: '10px' }}
-                      >
-                        View Demo Video
-                      </a>
-                    )}
-                    {isAdmin && (
-                      <button onClick={() => removeExercise(exercise.id)} style={{ marginLeft: '10px', color: 'red' }}>Remove Exercise</button>
-                    )}
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
-                    Coach Notes: {exercise.coachNotes}
-                  </td>
-                </tr>
-                <tr>
-                  <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
-                  <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
-                  <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-                  <th style={{ border: '1px solid black', padding: '4px' }}></th>
-                </tr>
-                {exercise.sets.map((set, setIndex) => (
-                  <React.Fragment key={`${exerciseIndex}-${setIndex}`}>
-                    <tr>
-                      <td style={{ border: '1px solid black', padding: '8px' }}>{set.setNumber}</td>
-                      <td style={{ border: '1px solid black', padding: '8px' }}>
-                        <input
-                          type="number"
-                          value={set.reps || ''}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
-                          style={{ width: '65px' }}
-                        />
-                      </td>
-                      <td style={{ border: '1px solid black', padding: '8px' }}>
-                        <input
-                          type="number"
-                          value={set.load || ''}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'load', e.target.value)}
-                          style={{ width: '65px' }}
-                        />
-                      </td>
-                      <td style={{ border: '1px solid black', padding: '4px', textAlign: 'center', width: '25px' }}>
-                        <span
-                          onClick={() => handleInputChange(exerciseIndex, setIndex, 'completed',!set.completed)}
-                          style={{
-                            cursor: 'pointer',
-                            color: set.completed ? 'green' : 'black',
-                          }}
-                        >
-                          {set.completed ? '✔️' : '⬜'}
-                        </span>
-                        <button onClick={() => deleteSet(exercise.id, set.id)}>Delete</button>
-                      </td>
-                    </tr>
-                    {setIndex === exercise.sets.length - 1 && (
-                      <>
-                        <tr>
-                          <td colSpan="4" style={{ border: '1px solid black', padding: '8px' }}>
-                            <label>Notes:</label>
-                            <textarea
-                              value={notes[exerciseIndex] || ''}
-                              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => handleNotesChange(exerciseIndex, e.target.value)}
-                              style={{ width: '95%' }}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colSpan="4" style={{ border: '1px solid black', padding: '8px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', alignItems: 'center' }}>
-                              <input
-                                type="file"
-                                accept="video/*"
-                                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleExerciseVideoUpload(exerciseIndex, file);
-                                }}
-                                style={{ maxWidth: '200px' }}
-                              />
-                              {exercise.clientVideoURL && (
-                                <a
-                                  href={exercise.clientVideoURL}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  View Your Video
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
-                            <button onClick={() => addSet(exercise.id)}>Add Set</button>
-                          </td>
-                        </tr>
-                      </>
-                    )}
-                  </React.Fragment>
-                ))}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ExerciseTable
+        exercises={workout.exercises}
+        isAdmin={isAdmin}
+        notes={notes}
+        handleInputChange={handleInputChange}
+        handleNotesChange={handleNotesChange}
+        handleExerciseVideoUpload={handleExerciseVideoUpload}
+        deleteSet={deleteSet}
+        addSet={addSet}
+        removeExercise={removeExercise}
+      />
       <div>
         <h2>Upload Workout Video</h2>
         <input type="file" accept="video/*" onChange={(e: ChangeEvent<HTMLInputElement>) => setVideoFile(e.target.files ? e.target.files[0] : null)} />
