@@ -2,7 +2,7 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ExerciseList from './ExerciseList';
-import ExerciseAutoComplete from './ExerciseAutoComplete';
+import TemplateExerciseRow from './TemplateExerciseRow';
 import { Link } from 'react-router-dom';
 import './WorkoutTemplateBuilder.css';
 import { Set, ExerciseDefinition, Workout, ExerciseInstance } from '../types/workout';
@@ -218,68 +218,15 @@ const WorkoutTemplateBuilder: React.FC = () => {
         <textarea value={coachNotes} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setCoachNotes(e.target.value)} style={{ width: '95%' }} />
       </div>
       {exercises.map((exercise, i) => (
-        <div key={i} style={{ marginBottom: '20px' }}>
-          <table style={{ borderCollapse: 'collapse', width: '100%', marginTop: '10px' }}>
-            <tbody>
-              <tr>
-                <td colSpan={3} style={{ border: '1px solid black', padding: '8px', backgroundColor: '#f5f5f5' }}>
-                  <ExerciseAutoComplete
-                    exercise={exercise}
-                    index={i}
-                    onExerciseChange={onExerciseChange}
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={3} style={{ border: '1px solid black', padding: '8px' }}>
-                  <label>Coach Notes for Exercise: </label>
-                  <textarea
-                    value={exercise.coachNotes || ''}
-                    onChange={(e) => {
-                      const updated = [...exercises];
-                      updated[i] = { ...updated[i], coachNotes: e.target.value };
-                      setExercises(updated);
-                    }}
-                    style={{ width: '100%', marginTop: '5px' }}
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
-                <th style={{ border: '1px solid black', padding: '8px' }}>Reps</th>
-                <th style={{ border: '1px solid black', padding: '8px' }}>Load</th>
-              </tr>
-              {exercise.sets.map((set, j) => (
-                <tr key={j}>
-                  <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
-                    {set.setNumber}
-                  </td>
-                  <td style={{ border: '1px solid black', padding: '8px' }}>
-                    <input
-                      type="number"
-                      value={set.reps || ''}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => updateSet(i, j, 'reps', Number(e.target.value))}
-                      style={{ width: '50px' }}
-                    />
-                  </td>
-                  <td style={{ border: '1px solid black', padding: '8px' }}>
-                    <input
-                      type="number"
-                      value={set.load || ''}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => updateSet(i, j, 'load', Number(e.target.value))}
-                      style={{ width: '50px' }}
-                    />
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td colSpan={3} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
-                  <button onClick={() => addSet(i)}>Add Set</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <TemplateExerciseRow
+          key={i}
+          exercise={exercise}
+          index={i}
+          onExerciseChange={onExerciseChange}
+          updateSet={updateSet}
+          addSet={addSet}
+          setExercises={setExercises}
+        />
       ))}
       <div style={{ marginTop: '20px' }}>
         <button onClick={addExercise} style={{ marginRight: '10px' }}>Add Exercise</button>
