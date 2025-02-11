@@ -68,10 +68,10 @@ const ExerciseTable: React.FC<ExerciseTableProps> = ({
                         type="number"
                         value={set.reps || ''}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(exerciseIndex, setIndex, 'reps', e.target.value)}
-                        style={{ width: '65px' }}
+                        style={{ width: '90px' }}
                       />
                     </td>
-                    <td style={{ border: '1px solid black', padding: '8px' }}>
+                    <td style={{ border: '1px solid black', padding: '8px'}}>
                       <input
                         type="number"
                         value={set.load || ''}

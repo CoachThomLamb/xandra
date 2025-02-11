@@ -64,7 +64,7 @@ const TemplateExerciseRow: React.FC<TemplateExerciseRowProps> = ({
                   type="number"
                   value={set.reps || ''}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => updateSet(index, j, 'reps', Number(e.target.value))}
-                  style={{ width: '50px' }}
+                  style={{ width: '70px' }}
                 />
               </td>
               <td style={{ border: '1px solid black', padding: '8px' }}>
@@ -72,7 +72,7 @@ const TemplateExerciseRow: React.FC<TemplateExerciseRowProps> = ({
                   type="number"
                   value={set.load || ''}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => updateSet(index, j, 'load', Number(e.target.value))}
-                  style={{ width: '50px' }}
+                  style={{ width: '70px' }}
                 />
               </td>
             </tr>

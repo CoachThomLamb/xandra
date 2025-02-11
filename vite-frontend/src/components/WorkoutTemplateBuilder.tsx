@@ -1,44 +1,28 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ExerciseList from './ExerciseList';
 import TemplateExerciseRow from './TemplateExerciseRow';
 import { Link } from 'react-router-dom';
 import './WorkoutTemplateBuilder.css';
-import { Set, ExerciseDefinition, Workout, ExerciseInstance } from '../types/workout';
+import { Workout } from '../types/workout';
+import { useExercises } from '../hooks/useExercises';
 
-// create a workout template 
 const WorkoutTemplateBuilder: React.FC = () => {
   const [title, setTitle] = useState<string>('');
   const [coachNotes, setCoachNotes] = useState<string>('');
-  const [exercises, setExercises] = useState<ExerciseInstance[]>([
-    { id: '', name: '', exerciseId: '', clientVideoURL: '', sets: [{ setNumber: 1, reps: 0, load: 0 }], orderBy: 0 }
-  ]);
   const [templates, setTemplates] = useState<Workout[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
 
-  // ...existing code...
-
-  const updateSet = (exerciseIndex: number, setIndex: number, field: keyof Set, value: number) => {
-    const updatedExercises = exercises.map((exercise, i) =>
-      i === exerciseIndex
-        ? {
-            ...exercise,
-            sets: exercise.sets.map((set, j) =>
-              j === setIndex ? { ...set, [field]: value } : set
-            ),
-          }
-        : exercise
-    );
-    setExercises(updatedExercises);
-  };
-
-  const onExerciseChange = (index: number, field: keyof ExerciseInstance, value: string) => {
-    const updatedExercises = [...exercises];
-    updatedExercises[index][field] = value;
-    setExercises(updatedExercises);
-  };
+  const {
+    exercises,
+    setExercises,
+    updateSet,
+    onExerciseChange,
+    addExercise,
+    addSet
+  } = useExercises();
 
   const saveWorkoutTemplate = async () => {
     try {
@@ -159,34 +143,6 @@ const WorkoutTemplateBuilder: React.FC = () => {
 
     fetchTemplates();
   }, []);
-
-  const addExercise = () => {
-    setExercises([...exercises, { 
-      name: '', 
-      exerciseId: '', 
-      id: '', 
-      sets: [{ setNumber: 1, reps: 0, load: 0 }], 
-      orderBy: exercises.length 
-    }]);
-  };
-
-  const addSet = (exerciseIndex: number) => {
-    const updatedExercises = exercises.map((exercise, i) =>
-      i === exerciseIndex
-        ? { 
-            ...exercise, 
-            sets: [...exercise.sets, { 
-              setNumber: exercise.sets.length + 1, 
-              reps: 0, 
-              load: 0 
-            }] 
-          }
-        : exercise
-    );
-    setExercises(updatedExercises);
-  };
-
-  // ...existing code...
 
   return (
     <div style={{ overflowY: 'scroll', overflowX: 'hidden', maxHeight: 'calc(100vh - 200px)', width: '100%' }}>
