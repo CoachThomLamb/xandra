@@ -34,7 +34,13 @@ const AdminDashboard = () => {
       const templateData = templateDoc.data();
 
       const programmingRef = collection(db, 'users', userId, 'workouts');
-      const newWorkoutRef = await addDoc(programmingRef, { title: templateData.title, coachNotes: templateData.coachNotes, completed: false, assignedDate: new Date().toISOString(), dueDate }); // Update this line
+      const newWorkoutRef = await addDoc(programmingRef, {
+        title: templateData.title,
+        coachNotes: templateData.coachNotes,
+        completed: false,
+        assignedDate: new Date().toISOString(), // Store assigned date in UTC
+        dueDate: new Date(dueDate).toISOString() // Convert due date to UTC
+      });
 
       const exercisesCollection = collection(templateDoc.ref, 'exercises');
       const exercisesSnapshot = await getDocs(exercisesCollection);

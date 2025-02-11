@@ -1,135 +1,49 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, writeBatch, deleteDoc } from 'firebase/firestore';
-import { auth,  db } from '../firebaseConfig';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { ExerciseDefinition, Set, ExerciseInstance, Workout } from '../types/workout';
+import { doc, getDoc, deleteDoc, addDoc, collection, writeBatch } from 'firebase/firestore';
+import { auth, db } from '../firebaseConfig';
 import ExerciseTable from './ExerciseTable';
+import { useWorkoutDetail } from '../hooks/useWorkoutDetail';
 
 const UserWorkoutDetail: React.FC = () => {
-  const { userId, workoutId } = useParams<{ userId: string; workoutId: string }>();
+  const { userId = '', workoutId = '' } = useParams();
   const navigate = useNavigate();
-  
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [clientName, setClientName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [notes, setNotes] = useState<Record<number, string>>({});
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoURL, setVideoURL] = useState('');
-  const [dueDate, setDueDate] = useState<Date | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  const {
+    workout,
+    setWorkout,
+    clientName,
+    error,
+    notes,
+    videoFile,
+    videoURL,
+    dueDate,
+    setVideoFile,
+    handleInputChange,
+    handleNotesChange,
+    handleVideoUpload,
+    handleExerciseVideoUpload,
+    completeWorkout,
+    saveWorkout,
+    setDueDate,
+    fetchWorkout
+  } = useWorkoutDetail(userId, workoutId);
 
-  type SetField = 'reps' | 'load' | 'completed';
-  type SetValue = number | boolean;
-
-  const handleInputChange = (exerciseIndex: number, setIndex: number, field: SetField, value: SetValue) => {
-    setWorkout((prevWorkout) => {
-      if (!prevWorkout) return null;
-      const updatedExercises = [...prevWorkout.exercises];
-      const set = updatedExercises[exerciseIndex].sets[setIndex];
-      if (field === 'reps' || field === 'load') {
-        set[field] = value as number;
-      } else if (field === 'completed') {
-        set[field] = value as boolean;
-      }
-      return { ...prevWorkout, exercises: updatedExercises };
-    });
-    saveWorkout();
-  };
-
-  const handleNotesChange = (exerciseIndex: number, value: string) => {
-    setNotes((prev) => ({
-      ...prev,
-      [exerciseIndex]: value,
-    }));
-    saveWorkout();
-  };
-
-  const handleVideoUpload = async () => {
-    if (!videoFile) return;
-
-    const storage = getStorage();
-    const storageRef = ref(storage, `videos/${userId}/${workoutId}/${videoFile.name}`);
-    await uploadBytes(storageRef, videoFile);
-    const url = await getDownloadURL(storageRef);
-    setVideoURL(url);
-
-    const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-    await updateDoc(workoutDocRef, { videoURL: url });
-    console.log('Video uploaded and URL saved to Firestore');
-  };
-
-  const handleExerciseVideoUpload = async (exerciseIndex: number, file: File) => {
-    if (!file) return;
-
-    const storage = getStorage();
-    const storageRef = ref(storage, `videos/${userId}/${workoutId}/exercises/${exerciseIndex}/${file.name}`);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-
-    setWorkout((prevWorkout) => {
-      if (!prevWorkout) return null;
-      const updatedExercises = [...prevWorkout.exercises];
-      updatedExercises[exerciseIndex].clientVideoURL = url;
-      return { ...prevWorkout, exercises: updatedExercises };
-    });
-
-    // Save to Firestore
-    const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), workout!.exercises[exerciseIndex].id);
-    await updateDoc(exerciseDocRef, { clientVideoURL: url });
-  };
-
-  const completeWorkout = async () => {
+  const deleteWorkout = async () => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      const completedAt = new Date().toISOString();
-      await updateDoc(workoutDocRef, { completed: true, notes, completedAt: completedAt });
-      await saveWorkout();
-      alert('Workout completed successfully!');
+      await deleteDoc(workoutDocRef);
+      alert('Workout deleted successfully!');
+      navigate(`/user-workouts/${userId}`);
     } catch (error) {
-      console.error('Error completing workout:', error);
-      alert('Error completing workout. Please try again later.');
-    }
-  };
-
-  const saveWorkout = async (newDueDate?: string) => {
-    try {
-      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await updateDoc(workoutDocRef, { notes, dueDate: newDueDate || dueDate });
-
-      // Save exercises and sets
-      const batch = writeBatch(db); // Use batch to optimize Firestore writes
-      for (const [exerciseIndex, exercise] of workout!.exercises.entries()) {
-        const exerciseDocRef = doc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises'), exercise.id || undefined);
-        batch.set(exerciseDocRef, {
-          name: exercise.name,
-          orderBy: exercise.orderBy,
-          exerciseId: exercise.exerciseId,
-          clientVideoURL: exercise.clientVideoURL,
-          coachNotes: exercise.coachNotes
-        });
-
-        for (const [setIndex, set] of exercise.sets.entries()) {
-          const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id || undefined);
-          batch.set(setDocRef, {
-            setNumber: set.setNumber,
-            reps: set.reps,
-            load: set.load,
-            completed: set.completed || false,
-          });
-        }
-      }
-
-      await batch.commit(); // Commit the batch
-      console.log('Workout saved successfully!');
-    } catch (error) {
-      console.error('Error saving workout:', error);
+      console.error('Error deleting workout:', error);
+      alert('Error deleting workout. Please try again later.');
     }
   };
 
   const copyWorkout = async (originalWorkoutId: string, userId: string) => {
     try {
-      // Get the original workout document
       const originalWorkoutDocRef = doc(db, 'users', userId, 'workouts', originalWorkoutId);
       const originalWorkoutDoc = await getDoc(originalWorkoutDocRef);
 
@@ -139,7 +53,6 @@ const UserWorkoutDetail: React.FC = () => {
 
       const originalWorkoutData = originalWorkoutDoc.data();
 
-      // Create a new workout document with the same information but a new ID
       const newWorkoutDocRef = await addDoc(collection(db, 'users', userId, 'workouts'), {
         ...originalWorkoutData,
         title: `Copied from ${originalWorkoutData.title}`,
@@ -149,8 +62,7 @@ const UserWorkoutDetail: React.FC = () => {
         createdAt: new Date().toISOString()
       });
 
-      // Copy exercises and sets
-      const batch = writeBatch(db); // Use batch to optimize Firestore writes
+      const batch = writeBatch(db);
       const exercisesSnapshot = await getDocs(collection(originalWorkoutDocRef, 'exercises'));
       for (const exerciseDoc of exercisesSnapshot.docs) {
         const exerciseData = exerciseDoc.data();
@@ -165,93 +77,12 @@ const UserWorkoutDetail: React.FC = () => {
         }
       }
 
-      await batch.commit(); // Commit the batch
+      await batch.commit();
       console.log('Workout copied successfully!');
 
-      // Redirect to the copied workout
       navigate(`/user-workouts/${userId}/workouts/${newWorkoutDocRef.id}`);
-      // navigate(`/user-workouts/${userId}`);
     } catch (error) {
       console.error('Error copying workout:', error);
-    }
-  };
-
-  const deleteWorkout = async () => {
-    try {
-      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      await deleteDoc(workoutDocRef);
-      alert('Workout deleted successfully!');
-      navigate(`/user-workouts/${userId}`);
-    } catch (error) {
-      console.error('Error deleting workout:', error);
-      alert('Error deleting workout. Please try again later.');
-    }
-  };
-  const fetchWorkout = async () => {
-    try {
-      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
-      const workoutDoc = await getDoc(workoutDocRef);
-      if (workoutDoc.exists()) {
-        const workoutData = workoutDoc.data() as Workout;
-
-        const exercisesCollection = collection(workoutDocRef, 'exercises');
-        const exercisesSnapshot = await getDocs(exercisesCollection);
-        let exercisesData = await Promise.all(
-          exercisesSnapshot.docs.map(async (exerciseDoc) => {
-            const setsCollection = collection(exerciseDoc.ref, 'sets');
-            const setsSnapshot = await getDocs(setsCollection);
-            const setsData = setsSnapshot.docs.map((setDoc) => ({ id: setDoc.id, ...setDoc.data() as Set }));
-            setsData.sort((a, b) => a.setNumber - b.setNumber);
-            const exerciseData = exerciseDoc.data();
-            const name = exerciseData.name || '';
-            const orderBy = exerciseData.orderBy;
-            const exerciseId = exerciseData.exerciseId;
-            const videoURL = await getExerciseVideoURL(exerciseData.exerciseId);
-            const clientVideoURL = exerciseData.clientVideoURL || '';
-            const coachNotes = exerciseData.coachNotes || '';
-            return { 
-              id: exerciseDoc.id, 
-              name, 
-              videoURL, 
-              exerciseId, 
-              orderBy, 
-              sets: setsData,
-              clientVideoURL, 
-              coachNotes,
-            };
-          })
-        );
-
-        exercisesData.sort((a, b) => {
-          return a.orderBy - b.orderBy;
-        })
-
-        setWorkout({ ...workoutData, exercises: exercisesData });
-        setNotes(workoutData.notes || {});
-        setVideoURL(workoutData.videoURL || '');
-        setDueDate(workoutData.dueDate || null);
-      } else {
-        setError('Workout not found');
-      }
-    } catch (error) {
-      console.error('Error fetching workout:', error);
-      setError('Error fetching workout. Please try again later.');
-    }
-  };
-
-  const getExerciseVideoURL = async (exerciseId: string): Promise<string> => {
-    console.log("exerciseId", exerciseId);
-    try {
-      const exerciseDoc = await getDoc(doc(db, 'exercises', exerciseId));
-      if (exerciseDoc.exists()) {
-        return exerciseDoc.data().videoURL || '';
-      } else {
-        console.error('Exercise not found');
-        return '';
-      }
-    } catch (error) {
-      console.error('Error fetching exercise video URL:', error);
-      return '';
     }
   };
 
@@ -260,21 +91,11 @@ const UserWorkoutDetail: React.FC = () => {
       const setDocRef = doc(db, 'users', userId, 'workouts', workoutId, 'exercises', exerciseId, 'sets', setId);
       await deleteDoc(setDocRef);
       console.log('Set deleted successfully!');
-      fetchWorkout(); // Reload the workout to show the changes
+      fetchWorkout();
     } catch (error) {
       console.error('Error deleting set:', error);
       alert('Error deleting set. Please try again later.');
     }
-  };
-
-  const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const newDueDate = e.target.value;
-    setDueDate(newDueDate);
-    setWorkout((prevWorkout) => {
-      if (!prevWorkout) return null;
-      return { ...prevWorkout, dueDate: newDueDate };
-    });
-    saveWorkout(newDueDate);
   };
 
   const addSet = async (exerciseId: string) => {
@@ -287,63 +108,18 @@ const UserWorkoutDetail: React.FC = () => {
       };
       const setDocRef = await addDoc(collection(db, 'users', userId, 'workouts', workoutId, 'exercises', exerciseId, 'sets'), newSet);
       console.log('Set added successfully!', setDocRef.id);
-      fetchWorkout(); // Reload the workout to show the changes
+      fetchWorkout();
     } catch (error) {
       console.error('Error adding set:', error);
       alert('Error adding set. Please try again later.');
     }
   };
 
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', userId));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setClientName(`${userData.firstName} ${userData.lastName}`);
-          
-        }
-      } catch (error) {
-        console.error('Error fetching user details:', error);
-      }
-    };
-    const checkAdminPrivileges = async () => {
-      try {
-        const user = auth.currentUser;
-        console.log('user:', user);
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            console.log('userData:', userData.role);
-            setIsAdmin(userData.role === 'admin' || false);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking admin privileges:', error);
-      }
-    };
-
-    checkAdminPrivileges();
-    
-
-    fetchUserDetails();
-    fetchWorkout();
-  }, [userId, workoutId]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        saveWorkout();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [workout, notes]);
+  const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newDueDate = e.target.value;
+    setDueDate(newDueDate);
+    saveWorkout(newDueDate);
+  };
 
   const removeExercise = async (exerciseId: string) => {
     try {
@@ -364,13 +140,27 @@ const UserWorkoutDetail: React.FC = () => {
     }
   };
 
-  if (error) {
-    return <div>{error}</div>;
-  }
+  useEffect(() => {
+    const checkAdminPrivileges = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setIsAdmin(userData.role === 'admin' || false);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking admin privileges:', error);
+      }
+    };
 
-  if (!workout) {
-    return <div>Loading...</div>;
-  }
+    checkAdminPrivileges();
+  }, []);
+
+  if (error) return <div>{error}</div>;
+  if (!workout) return <div>Loading...</div>;
 
   return (
     <div style={{ overflowY: 'auto', overflowX: 'hidden', maxHeight: '100vh', maxWidth: '100vw', padding: '10px', boxSizing: 'border-box' , paddingBottom: '180px'}}>
