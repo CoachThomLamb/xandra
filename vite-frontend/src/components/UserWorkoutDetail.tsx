@@ -127,6 +127,7 @@ const UserWorkoutDetail: React.FC = () => {
 
   const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newDueDate = e.target.value;
+    console.log('newDueDate:', newDueDate);
     setDueDate(newDueDate);
     saveWorkout(newDueDate);
   };
