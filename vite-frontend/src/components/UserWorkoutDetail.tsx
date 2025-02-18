@@ -29,6 +29,7 @@ const UserWorkoutDetail: React.FC = () => {
     setDueDate,
     fetchWorkout
   } = useWorkoutDetail(userId, workoutId);
+  // console.log('dueDate:', dueDate);
 
   const deleteWorkout = async () => {
     try {
@@ -115,6 +116,15 @@ const UserWorkoutDetail: React.FC = () => {
     }
   };
 
+  const formatDate = (date: string | null): string => {
+    if (!date) return '';
+    const d = new Date(date);
+    // Add timezone offset to get correct local date
+    const timezoneOffset = d.getTimezoneOffset() * 60000;
+    const localDate = new Date(d.getTime() + timezoneOffset);
+    return localDate.toISOString().split('T')[0]; // This ensures yyyy-mm-dd format
+  };
+
   const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newDueDate = e.target.value;
     setDueDate(newDueDate);
@@ -173,11 +183,11 @@ const UserWorkoutDetail: React.FC = () => {
       <p>Due Date: {isAdmin ? (
         <input 
           type="date" 
-          value={dueDate || ''} 
+          value={formatDate(dueDate)} 
           onChange={handleDueDateChange} 
         />
       ) : (
-        dueDate
+        formatDate(dueDate)
       )}</p>
       <h2>Coach Notes</h2>
       <p>{workout.coachNotes}</p>

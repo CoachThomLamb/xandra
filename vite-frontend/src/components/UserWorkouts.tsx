@@ -86,8 +86,19 @@ const UserWorkouts: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    const date = new Date(dateString);
+    // Add timezone offset to get correct local date
+    const timezoneOffset = date.getTimezoneOffset() * 60000;
+    const localDate = new Date(date.getTime() + timezoneOffset);
+    
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      timeZone: 'UTC' // Force UTC to prevent double timezone adjustment
+    };
+    return localDate.toLocaleDateString(undefined, options);
   };
 
   const currentWorkouts = workouts.filter(workout => !workout.completed);

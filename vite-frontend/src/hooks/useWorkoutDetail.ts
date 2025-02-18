@@ -101,6 +101,7 @@ export const useWorkoutDetail = (userId: string, workoutId: string) => {
       }
       
       await updateDoc(workoutDocRef, updateData);
+      console.log("updateData", updateData);
 
       // Save exercises and sets
       if (workout) {
@@ -122,6 +123,7 @@ export const useWorkoutDetail = (userId: string, workoutId: string) => {
         await batch.commit();
       }
     } catch (error) {
+      
       console.error('Error saving workout:', error);
       throw new Error('Failed to save workout');
     }
