@@ -12,8 +12,7 @@ jobs:
       # 1. Check out your repository
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          path: vite-frontend
+     
       - name: Change to vite-frontend directory
         run: cd vite-frontend
         
