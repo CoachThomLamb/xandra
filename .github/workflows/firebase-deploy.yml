@@ -14,10 +14,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: vite-frontend
-      - name: pwd and list
-        run: pwd
-              ls -ls
-
+      - name: Change to vite-frontend directory
+        run: cd vite-frontend
+        
       # 2. Set up Node
       - name: Use Node
         uses: actions/setup-node@v3
@@ -27,13 +26,13 @@ jobs:
       # 3. Install dependencies
       - name: Install
         run: npm install
-        working-directory: ./vite-frontend
+        
         # or: yarn install
 
       # 4. Build your project (optional if you have a build step)
       - name: Build
         run: npm run build
-        working-directory: ./vite-frontend
+        
         # or: yarn build
 
       # 5. Deploy to Firebase
