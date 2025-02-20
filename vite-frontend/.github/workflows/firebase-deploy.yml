@@ -12,6 +12,8 @@ jobs:
       # 1. Check out your repository
       - name: Check out code
         uses: actions/checkout@v3
+        with:
+          path: vite-frontend
 
       # 2. Set up Node
       - name: Use Node
