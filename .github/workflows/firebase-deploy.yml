@@ -1,0 +1,36 @@
+name: Deploy to Firebase
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out your repository
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # 2. Set up Node
+      - name: Use Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # 3. Install dependencies
+      - name: Install
+        run: npm install
+        # or: yarn install
+
+      # 4. Build your project (optional if you have a build step)
+      - name: Build
+        run: npm run build
+        # or: yarn build
+
+      # 5. Deploy to Firebase
+      - name: Deploy to Firebase
+        run: npx firebase deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
