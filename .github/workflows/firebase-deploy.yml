@@ -12,41 +12,34 @@ jobs:
       # 1. Check out your repository
       - name: Check out code
         uses: actions/checkout@v3
-     
-      - name: Change to vite-frontend directory
-        run: cd ./vite-frontend
-        |
-          echo "Current directory: $(pwd)"
-          echo "Files in directory:"
-          ls -la
-      
 
-      - name: Show current directory and list files
+      # 2. Move into subdirectory (optional)
+      - name: Move to vite-frontend
+        working-directory: ./vite-frontend
         run: |
           echo "Current directory: $(pwd)"
           echo "Files in directory:"
           ls -la
-        
-      # 2. Set up Node
+
+      # 3. Set up Node
       - name: Use Node
         uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      # 3. Install dependencies
+      # 4. Install dependencies
       - name: Install
+        working-directory: ./vite-frontend
         run: npm install
-        
-        # or: yarn install
 
-      # 4. Build your project (optional if you have a build step)
+      # 5. Build your project (optional if you have a build step)
       - name: Build
+        working-directory: ./vite-frontend
         run: npm run build
-        
-        # or: yarn build
 
-      # 5. Deploy to Firebase
+      # 6. Deploy to Firebase
       - name: Deploy to Firebase
+        working-directory: ./vite-frontend
         run: npx firebase deploy --only hosting
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
