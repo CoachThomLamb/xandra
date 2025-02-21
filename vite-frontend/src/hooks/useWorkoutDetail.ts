@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, writeBatch, setDoc, collectionGroup } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { Set, ExerciseInstance, Workout } from '../types/workout';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -72,10 +72,48 @@ export const useWorkoutDetail = (userId: string, workoutId: string) => {
     try {
       const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
       const completedAt = new Date().toISOString();
+      
+      // Update original workout
       await updateDoc(workoutDocRef, { 
         completed: true, 
         notes, 
-        completedAt: completedAt 
+        completedAt 
+      });
+
+      // Create workout post in user's workout-posts subcollection
+      const workoutPostRef = doc(collection(db, 'users', userId, 'workout-posts'));
+      
+      // Get exercise data with sets
+      const exercisesData = await Promise.all(workout!.exercises.map(async (exercise) => {
+        const exerciseRef = doc(workoutDocRef, 'exercises', exercise.id);
+        const setsSnapshot = await getDocs(collection(exerciseRef, 'sets'));
+        const sets = setsSnapshot.docs.map(setDoc => ({
+          ...setDoc.data(),
+          id: setDoc.id,
+          setNumber: setDoc.data().setNumber,
+          reps: setDoc.data().reps,
+          load: setDoc.data().load,
+          completed: setDoc.data().completed
+        }));
+        return {
+          ...exercise,
+          sets: sets.sort((a, b) => a.setNumber - b.setNumber)
+        };
+      }));
+
+      // Create the workout post with complete data
+      await setDoc(workoutPostRef, {
+        originalWorkoutId: workoutId,
+        title: workout?.title,
+        exercises: exercisesData,
+        completedAt,
+        notes,
+        videoURL,
+        userId,
+        clientName,
+        coachNotes: workout?.coachNotes,
+        createdAt: new Date().toISOString(),
+        dueDate: workout?.dueDate
       });
       
       if (workout) {
