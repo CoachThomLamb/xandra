@@ -99,32 +99,43 @@ export const useWorkoutDetail = (userId: string, workoutId: string) => {
       if (newDueDate !== undefined) {
         updateData.dueDate = newDueDate;
       }
+      console.log('updateData:', updateData);
       
       await updateDoc(workoutDocRef, updateData);
 
       // Save exercises and sets
-      if (workout) {
+      
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      throw new Error('Failed to save workout');
+    }
+    try {
+      if (workout && workout.exercises) {
+        const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
         const batch = writeBatch(db);
         for (const exercise of workout.exercises) {
-          const exerciseDocRef = doc(collection(workoutDocRef, 'exercises'), exercise.id);
-          
-          for (const set of exercise.sets) {
-            if (set.id) {
-              const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id);
-              batch.update(setDocRef, {
-                reps: set.reps,
-                load: set.load,
-                completed: set.completed
-              });
+          if (exercise && exercise.sets) {
+            const exerciseDocRef = doc(collection(workoutDocRef, 'exercises'), exercise.id);
+            for (const set of exercise.sets) {
+              if (set && set.id) {
+                const setDocRef = doc(collection(exerciseDocRef, 'sets'), set.id);
+           
+                batch.update(setDocRef, {
+                  reps: set.reps,
+                  load: set.load,
+                  completed: set?.completed || false
+                });
+              }
             }
           }
         }
         await batch.commit();
       }
     } catch (error) {
-      console.error('Error saving workout:', error);
-      throw new Error('Failed to save workout');
+      console.error('Error saving exercises:', error);
+      throw new Error('Failed to save exercises');
     }
+    
   };
 
   const fetchWorkout = async () => {
