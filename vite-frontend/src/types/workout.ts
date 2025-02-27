@@ -34,3 +34,14 @@ export interface Workout {
   completedAt?: Date;
   dueDate?: Date; // Add this line
 }
+export interface Post {
+  id: string
+  coachNotes: string;
+  exercises: ExerciseInstance[];
+  notes?: Record<number, string>;
+  videoURL?: string;
+  title?: string;
+  completed?: boolean;
+  completedAt?: Date;
+  dueDate?: Date; // Add this line
+}

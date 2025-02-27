@@ -12,6 +12,9 @@ import ExerciseList from './components/ExerciseList';
 import LandingPage from './components/LandingPage';
 import UserFood from './components/UserFood';
 import ExerciseManagement from './components/ExerciseManagement';
+import PostsCollection from './components/PostsCollection';
+import PostDetail from './components/PostDetail';
+import UserPosts from './components/UserPosts';
 
 
 function App() {
@@ -56,13 +59,19 @@ function App() {
       <div>
         {user ? (
           <div>
-            <button onClick={handleLogout}>Logout</button>
-            {isAdmin && <Link to="/admin">Admin Dashboard</Link>}
+            <div style={{ marginBottom: '20px', paddingLeft: '20px' }}>
+              <button onClick={handleLogout}>Logout</button>
+              <Link to="/view-posts" style={{ marginLeft: '10px' }}>View Posts</Link>
+              {isAdmin && <Link to="/admin" style={{ marginLeft: '10px' }}>Admin Dashboard</Link>}
+            </div>
             <Routes>
               <Route path="/" element={<UserWorkouts />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/view-posts" element={<UserPosts />} />  
+              <Route path="/view-posts/:userId" element={<PostsCollection />} />
               <Route path="/user-workouts/:userId" element={<UserWorkouts />} />
               <Route path="/user-workouts/:userId/workouts/:workoutId" element={<UserWorkoutDetail />} />
+              <Route path="/user-posts/:userId/posts/:postId" element={<PostDetail />} />
               <Route path="/workout-template-builder" element={<WorkoutTemplateBuilder />} />
               <Route path="/exercise-list" element={<ExerciseList />} />
               <Route path="/user-food/:userId" element={<UserFood />} />

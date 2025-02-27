@@ -1,8 +1,26 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, getDoc, updateDoc, writeBatch, setDoc, collectionGroup } from 'firebase/firestore';
+import { collection, getDocs,addDoc, doc, getDoc, updateDoc, writeBatch, setDoc, collectionGroup } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { Set, ExerciseInstance, Workout } from '../types/workout';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+interface WorkoutPost extends Omit<Workout, 'exercises'> {
+  exercises: Array<{
+    id: string;
+    name: string;
+    exerciseId: string;
+    clientVideoURL?: string;
+    coachNotes?: string;
+    orderBy: number;
+    sets: Array<{
+      id: string;
+      reps: number;
+      load: number;
+      completed: boolean;
+      setNumber: number;
+    }>;
+  }>;
+}
 
 export const useWorkoutDetail = (userId: string, workoutId: string) => {
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -80,43 +98,38 @@ export const useWorkoutDetail = (userId: string, workoutId: string) => {
         completedAt 
       });
 
-      // Create workout post in user's workout-posts subcollection
-      const workoutPostRef = doc(collection(db, 'users', userId, 'workout-posts'));
-      
-      // Get exercise data with sets
-      const exercisesData = await Promise.all(workout!.exercises.map(async (exercise) => {
-        const exerciseRef = doc(workoutDocRef, 'exercises', exercise.id);
-        const setsSnapshot = await getDocs(collection(exerciseRef, 'sets'));
-        const sets = setsSnapshot.docs.map(setDoc => ({
-          ...setDoc.data(),
-          id: setDoc.id,
-          setNumber: setDoc.data().setNumber,
-          reps: setDoc.data().reps,
-          load: setDoc.data().load,
-          completed: setDoc.data().completed
-        }));
-        return {
-          ...exercise,
-          sets: sets.sort((a, b) => a.setNumber - b.setNumber)
-        };
-      }));
+      if (workout && workout.exercises) {
+        // Create workout post
+        const workoutPostDocRef = doc(db, 'users', userId, 'workout-posts', workoutId);
+        const batch = writeBatch(db);
 
-      // Create the workout post with complete data
-      await setDoc(workoutPostRef, {
-        originalWorkoutId: workoutId,
-        title: workout?.title,
-        exercises: exercisesData,
-        completedAt,
-        notes,
-        videoURL,
-        userId,
-        clientName,
-        coachNotes: workout?.coachNotes,
-        createdAt: new Date().toISOString(),
-        dueDate: workout?.dueDate
-      });
-      
-      if (workout) {
+        // Prepare workout post data
+        const workoutPostData: WorkoutPost = {
+          ...workout,
+          notes,
+          completedAt,
+          exercises: workout.exercises.map(ex => ({
+            id: ex.id,
+            name: ex.name,
+            exerciseId: ex.exerciseId,
+            clientVideoURL: ex.clientVideoURL,
+            coachNotes: ex.coachNotes,
+            orderBy: ex.orderBy,
+            sets: ex.sets.map(set => ({
+              id: set.id,
+              reps: set.reps,
+              load: set.load,
+              completed: set.completed || false,
+              setNumber: set.setNumber
+            }))
+          }))
+        };
+
+        // Set the workout post document
+        batch.set(workoutPostDocRef, workoutPostData);
+
+        await batch.commit();
+
         setWorkout({
           ...workout,
           completed: true,
