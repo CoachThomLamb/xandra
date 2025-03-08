@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { doc, getDoc, deleteDoc, addDoc, collection, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, addDoc, collection, writeBatch, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import ExerciseTable from './ExerciseTable';
 import { useWorkoutDetail } from '../hooks/useWorkoutDetail';
