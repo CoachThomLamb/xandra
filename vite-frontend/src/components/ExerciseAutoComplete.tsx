@@ -1,5 +1,5 @@
-import React, { useState, ChangeEvent } from 'react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { ExerciseInstance } from '../types/workout';
 
@@ -30,16 +30,19 @@ const ExerciseAutoComplete: React.FC<ExerciseAutoCompleteProps> = ({ exercise, i
     }
   };
 
-  const fetchExerciseNames = async () => {
+  useEffect(() => {
     const exerciseCollection = collection(db, 'exercises');
-    const exerciseSnapshot = await getDocs(exerciseCollection);
-    const names = exerciseSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-    setExerciseNames(names);
-    setFilteredNames(names);
-  };
-
-  useState(() => {
-    fetchExerciseNames();
+    const unsubscribe = onSnapshot(exerciseCollection, (snapshot) => {
+      const names = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        name: doc.data().name 
+      }));
+      setExerciseNames(names);
+      setFilteredNames(names);
+    });
+    
+    // Clean up subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   return (
