@@ -17,6 +17,7 @@ import PostDetail from './components/PostDetail';
 import UserPosts from './components/UserPosts';
 
 
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);

@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+      // existin compiler options, no change
+  
+      // this is the new configuration
+      "types": ["vitest/globals"],
+    },
+  
+    // also include the file we just created:
+    "include": ["src", "./src/test/setup.ts"]
+  }
+  
