@@ -3,6 +3,9 @@
       // existin compiler options, no change
   
       // this is the new configuration
+     
+      "jsx": "react-jsx",
+      
       "types": ["vitest/globals"],
     },
   
