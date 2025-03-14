@@ -52,6 +52,9 @@ async function assignInitialWorkout(userId: string): Promise<void> {
   
   // TODO: Implement API call to assign a workout
   // Example:
+  //lets fetch the workout template we want to assign to a new user 
+  // then reproduce the assignement logic here
+  
   const defaultWorkoutId = 'workout-beginner-001';
   await admin.firestore().collection('users').doc(userId).collection('workouts').add({
     workoutId: defaultWorkoutId,

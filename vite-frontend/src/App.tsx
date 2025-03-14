@@ -15,6 +15,7 @@ import ExerciseManagement from './components/ExerciseManagement';
 import PostsCollection from './components/PostsCollection';
 import PostDetail from './components/PostDetail';
 import UserPosts from './components/UserPosts';
+import WiloVision from './components/articles/WiloVision';
 
 
 
@@ -81,11 +82,14 @@ function App() {
           </div>
         ) : (
           <div>
-            <button onClick={handleLoginWithPopup}>Login with Popup</button>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/landing" element={<LandingPage />} />
+              <Route path="/wilovision" element={<WiloVision />} />
             </Routes>
+            <button onClick={handleLoginWithPopup}>SignUp</button>
+            <button onClick={handleLoginWithPopup}>Login</button>
+
           </div>
         )}
       </div>

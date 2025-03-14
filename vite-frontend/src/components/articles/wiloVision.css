@@ -1,0 +1,79 @@
+.wilo-article-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: left;
+}
+
+.wilo-article-scrollable {
+  max-height: 80vh; /* Adjust height as needed */
+  width: 100%;
+  overflow-y: auto;
+  padding: 0 1rem;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.wilo-article {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+/* Styling scrollbars for webkit browsers */
+.wilo-article-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wilo-article-scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.wilo-article-scrollable::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.wilo-article-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Existing styles can remain below */
+
+.wilo-article h1 {
+  margin-bottom: 1.5rem;
+}
+
+.wilo-article h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.wilo-article p {
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.wilo-article ul, .wilo-article ol {
+  margin-bottom: 1.5rem;
+  padding-left: 2rem;
+}
+
+.wilo-article li {
+  margin-bottom: 0.5rem;
+}
+
+.wilo-article blockquote {
+  font-style: italic;
+  border-left: 4px solid #ccc;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.wilo-article hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #eaeaea;
+}
