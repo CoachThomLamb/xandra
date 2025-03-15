@@ -1,8 +1,10 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { assignTemplateToUser } from './assignWorkoutTemplate';
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
+const templateId: string = '24HGcYNxcjpDjrHhYV11';
 
 /**
  * Firebase function that triggers when a new user is created in Firebase Auth
@@ -12,12 +14,14 @@ export const onUserCreate = functions.auth.user().onCreate(async (user: admin.au
   try {
     // Log the new user creation
     console.log(`New user created: ${user.uid}, email: ${user.email}`);
+    const dueDate = new Date(); // Due date is today, can be customized 
     
     // Create a client account in your backend
     await createClientAccount(user);
     
     // Assign initial workout to the user
-    await assignInitialWorkout(user.uid);
+    console.log(`Assigning workout template ${templateId} to user: ${user.uid}`);
+    await assignTemplateToUser(templateId, user.uid, dueDate);
     
     // Additional post-registration tasks can be added here
     
@@ -46,19 +50,6 @@ async function createClientAccount(user: admin.auth.UserRecord): Promise<void> {
 /**
  * Assign an initial workout to the new user
  */
-async function assignInitialWorkout(userId: string): Promise<void> {
-  // Example implementation - replace with your actual logic
-  console.log(`Assigning initial workout to user: ${userId}`);
-  
-  // TODO: Implement API call to assign a workout
-  // Example:
-  //lets fetch the workout template we want to assign to a new user 
-  // then reproduce the assignement logic here
-  
-  const defaultWorkoutId = 'workout-beginner-001';
-  await admin.firestore().collection('users').doc(userId).collection('workouts').add({
-    workoutId: defaultWorkoutId,
-    assignedAt: admin.firestore.FieldValue.serverTimestamp(),
-    completed: false
-  });
-}
+/**
+ * Assign an initial workout to the new user
+ */
