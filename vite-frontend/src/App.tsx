@@ -46,6 +46,14 @@ function App() {
       console.error("Error signing in with popup:", error);
     }
   };
+  const handleLoginWithRedirect = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      console.error("Error signing in with redirect:", error);
+    }
+  };
 
 
   const handleLogout = async () => {
@@ -88,7 +96,10 @@ function App() {
               <Route path="/wilovision" element={<WiloVision />} />
             </Routes>
             <button onClick={handleLoginWithPopup}>SignUp</button>
-            <button onClick={handleLoginWithPopup}>Login</button>
+            <button onClick={handleLoginWithRedirect}>Login</button>
+            <button onClick={() => window.open('about:blank', '_blank', 'width=400,height=400')}>
+              Test Popup
+            </button>
 
           </div>
         )}
