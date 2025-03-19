@@ -29,7 +29,74 @@ const UserWorkoutDetail: React.FC = () => {
     setDueDate,
     fetchWorkout
   } = useWorkoutDetail(userId, workoutId);
-  // console.log('dueDate:', dueDate);
+  
+  const handleCoachNotesChange = async (exerciseId: string, value: string) => {
+    try {
+      // Update in Firestore
+      const exerciseDocRef = doc(db, 'users', userId, 'workouts', workoutId, 'exercises', exerciseId);
+      const batch = writeBatch(db);
+      batch.update(exerciseDocRef, { coachNotes: value });
+      await batch.commit();
+      
+      // Update local state
+      setWorkout((prevWorkout) => {
+        if (!prevWorkout) return null;
+        
+        const updatedExercises = prevWorkout.exercises.map(exercise => {
+          if (exercise.id === exerciseId) {
+            return { ...exercise, coachNotes: value };
+          }
+          return exercise;
+        });
+        
+        return { ...prevWorkout, exercises: updatedExercises };
+      });
+      
+    } catch (error) {
+      console.error('Error updating exercise coach notes:', error);
+      alert('Failed to update exercise coach notes. Please try again.');
+    }
+  };
+
+  const handleWorkoutCoachNotesChange = async (value: string) => {
+    try {
+      // Update in Firestore
+      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+      const batch = writeBatch(db);
+      batch.update(workoutDocRef, { coachNotes: value });
+      await batch.commit();
+      
+      // Update local state
+      setWorkout((prevWorkout) => {
+        if (!prevWorkout) return null;
+        return { ...prevWorkout, coachNotes: value };
+      });
+      
+    } catch (error) {
+      console.error('Error updating workout coach notes:', error);
+      alert('Failed to update workout coach notes. Please try again.');
+    }
+  };
+
+  const handleWorkoutTitleChange = async (value: string) => {
+    try {
+      // Update in Firestore
+      const workoutDocRef = doc(db, 'users', userId, 'workouts', workoutId);
+      const batch = writeBatch(db);
+      batch.update(workoutDocRef, { title: value });
+      await batch.commit();
+      
+      // Update local state
+      setWorkout((prevWorkout) => {
+        if (!prevWorkout) return null;
+        return { ...prevWorkout, title: value };
+      });
+      
+    } catch (error) {
+      console.error('Error updating workout title:', error);
+      alert('Failed to update workout title. Please try again.');
+    }
+  };
 
   const deleteWorkout = async () => {
     try {
@@ -177,7 +244,16 @@ const UserWorkoutDetail: React.FC = () => {
     <div style={{ overflowY: 'auto', overflowX: 'hidden', maxHeight: '100vh', maxWidth: '100vw', padding: '10px', boxSizing: 'border-box' , paddingBottom: '180px'}}>
       <h1>{clientName}'s Workout</h1>
       <h2>Workout Name</h2>
-      <h2>{workout.title}</h2>
+      {isAdmin ? (
+        <input
+          type="text"
+          value={workout.title || ''}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => handleWorkoutTitleChange(e.target.value)}
+          style={{ width: '100%', fontSize: '1.5em', fontWeight: 'bold', padding: '5px' }}
+        />
+      ) : (
+        <h2>{workout.title}</h2>
+      )}
       {workout.completedAt && (
         <p>Completed At: {new Date(workout.completedAt).toLocaleDateString()}</p>
       )}
@@ -190,8 +266,19 @@ const UserWorkoutDetail: React.FC = () => {
       ) : (
         formatDate(dueDate)
       )}</p>
-      <h2>Coach Notes</h2>
-      <p>{workout.coachNotes}</p>
+      
+      <h2>Workout Coach Notes</h2>
+      {isAdmin ? (
+        <textarea
+          value={workout.coachNotes || ''}
+          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => handleWorkoutCoachNotesChange(e.target.value)}
+          style={{ width: '100%', minHeight: '100px' }}
+          placeholder="Enter workout coach notes here..."
+        />
+      ) : (
+        <p>{workout.coachNotes}</p>
+      )}
+      
       <h2>Exercises</h2>
       <ExerciseTable
         exercises={workout.exercises}
@@ -200,6 +287,7 @@ const UserWorkoutDetail: React.FC = () => {
         handleInputChange={handleInputChange}
         handleNotesChange={handleNotesChange}
         handleExerciseVideoUpload={handleExerciseVideoUpload}
+        handleCoachNotesChange={handleCoachNotesChange}
         deleteSet={deleteSet}
         addSet={addSet}
         removeExercise={removeExercise}

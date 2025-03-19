@@ -8,6 +8,7 @@ interface ExerciseTableProps {
   handleInputChange: (exerciseIndex: number, setIndex: number, field: keyof Set, value: any) => void;
   handleNotesChange: (exerciseIndex: number, value: string) => void;
   handleExerciseVideoUpload: (exerciseIndex: number, file: File) => void;
+  handleCoachNotesChange: (exerciseId: string, value: string) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
   addSet: (exerciseId: string) => void;
   removeExercise: (exerciseId: string) => void;
@@ -20,6 +21,7 @@ const ExerciseTable: React.FC<ExerciseTableProps> = ({
   handleInputChange,
   handleNotesChange,
   handleExerciseVideoUpload,
+  handleCoachNotesChange,
   deleteSet,
   addSet,
   removeExercise,
@@ -49,9 +51,20 @@ const ExerciseTable: React.FC<ExerciseTableProps> = ({
                 </td>
               </tr>
               <tr>
-                <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
-                  Coach Notes: {exercise.coachNotes}
-                </td>
+                {isAdmin ? (
+                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px' }}>
+                    <label>Coach Notes:</label>
+                    <textarea
+                      value={exercise.coachNotes || ''}
+                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) => handleCoachNotesChange(exercise.id, e.target.value)}
+                      style={{ width: '95%' }}
+                    />
+                  </td>
+                ) : (
+                  <td colSpan="4" style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                    Coach Notes: {exercise.coachNotes}
+                  </td>
+                )}
               </tr>
               <tr>
                 <th style={{ border: '1px solid black', padding: '8px' }}>Set</th>
