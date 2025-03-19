@@ -123,9 +123,16 @@ const UserWorkouts: React.FC = () => {
       ))}
       </ul>
 
-      <h2>Past Workouts</h2>
+      <h2>Past Workouts hi</h2>
       <ul>
-      {pastWorkouts.map(workout => (
+      {pastWorkouts.sort((a,b) =>{
+         if (!a.completedAt) return 1;  // Move items without dates to the end
+         if (!b.completedAt) return -1;
+         
+         // Sort newest first (descending)
+         return new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime();
+
+      }).map(workout => (
         <li key={workout.id}>
         <Link to={`/user-workouts/${userId}/workouts/${workout.id}`}>
           {workout.title} - {workout.completedAt ? formatDate(workout.completedAt) : 'No completion date'}

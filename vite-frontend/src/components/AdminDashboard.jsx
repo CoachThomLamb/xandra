@@ -9,7 +9,7 @@ const AdminDashboard = () => {
   const [workoutTemplates, setWorkoutTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
-  const [dueDate, setDueDate] = useState(''); // Add this line
+  const [dueDate, setDueDate] = useState(''); 
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -83,8 +83,17 @@ const AdminDashboard = () => {
     }
   };
 
+  const scrollContainerStyle = {
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    maxHeight: 'calc(100vh - 120px)',
+    width: '100%',
+    padding: '15px',
+    boxSizing: 'border-box'
+  };
+
   return (
-    <div>
+    <div style={scrollContainerStyle}>
       <h1>Admin Dashboard</h1>
       <h2>Assign Workout Template</h2>
       <div>

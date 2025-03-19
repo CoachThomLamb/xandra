@@ -1,10 +1,6 @@
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin if not already initialized elsewhere
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+
 
 /**
  * Internal function for assigning a workout template to a user
@@ -12,10 +8,14 @@ if (!admin.apps.length) {
  * 
  * @param {string} templateId - The ID of the workout template to assign
  * @param {string} userId - The user ID to assign the workout to
- * @param {string} dueDate - ISO string for the workout due date
+ * @param {Date} dueDate - Date object for the workout due date
  * @returns {Promise<{success: boolean, workoutId: string}>} Result object with the new workout ID
  */
-async function assignTemplateToUser(templateId, userId, dueDate) {
+export async function assignTemplateToUser(
+  templateId: string, 
+  userId: string, 
+  dueDate: Date
+): Promise<{success: boolean, workoutId: string}> {
   if (!templateId || !userId || !dueDate) {
     throw new Error('Missing required parameters: templateId, userId, or dueDate');
   }
@@ -30,6 +30,9 @@ async function assignTemplateToUser(templateId, userId, dueDate) {
     }
     
     const templateData = templateDoc.data();
+    if (!templateData) {
+      throw new Error('Workout template data is undefined');
+    }
 
     // Create the new workout for the user
     const programmingRef = db.collection('users').doc(userId).collection('workouts');
@@ -38,7 +41,7 @@ async function assignTemplateToUser(templateId, userId, dueDate) {
       coachNotes: templateData.coachNotes || '',
       completed: false,
       assignedDate: new Date().toISOString(),
-      dueDate: new Date(dueDate).toISOString()
+      dueDate: dueDate.toISOString()
     });
 
     // Copy exercises from the template
@@ -80,8 +83,3 @@ async function assignTemplateToUser(templateId, userId, dueDate) {
     throw error;
   }
 }
-
-// Export the function to be used by other Firebase functions
-module.exports = {
-  assignTemplateToUser
-};
