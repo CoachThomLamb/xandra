@@ -35,6 +35,7 @@ export const useExercises = () => {
       orderBy: exercises.length 
     }]);
   };
+ 
 
   const addSet = (exerciseIndex: number) => {
     const updatedExercises = exercises.map((exercise, i) =>
